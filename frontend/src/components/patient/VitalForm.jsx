@@ -41,9 +41,9 @@ export default function VitalForm({ onSubmit }) {
           </option>
         ))}
       </select>
-      <div className="flex gap-2">
+      <div className="flex gap-2 min-w-0">
         <input
-          className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm"
+          className="flex-1 min-w-0 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm"
           placeholder={meta.placeholder}
           value={value}
           onChange={(e) => setValue(e.target.value)}

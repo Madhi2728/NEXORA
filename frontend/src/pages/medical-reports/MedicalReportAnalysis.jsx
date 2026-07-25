@@ -130,7 +130,11 @@ export default function MedicalReportAnalysis() {
           )}
         </div>
         <div>
-          <PrescriptionUpload onUploaded={handleUpload} />
+          <PrescriptionUpload
+            onUploaded={handleUpload}
+            title="Upload a report"
+            promptText="Click to choose a photo of your report"
+          />
         </div>
       </div>
       <p className="text-xs text-slate-500">

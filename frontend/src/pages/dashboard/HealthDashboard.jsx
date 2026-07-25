@@ -60,27 +60,23 @@ export default function HealthDashboard() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-4">
-          {loading ? (
-            <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
-              Loading...
-            </div>
-          ) : error ? (
-            <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-red-400 text-center">
-              {error}
-            </div>
-          ) : (
-            <>
-              <VitalHistoryChart vitals={vitals} type={activeType} />
-              <VitalTable vitals={vitals} onDelete={handleDelete} />
-            </>
-          )}
-        </div>
+      <div className="space-y-4">
+        {loading ? (
+          <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
+            Loading...
+          </div>
+        ) : error ? (
+          <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-red-400 text-center">
+            {error}
+          </div>
+        ) : (
+          <>
+            <VitalHistoryChart vitals={vitals} type={activeType} />
+            <VitalTable vitals={vitals} onDelete={handleDelete} />
+          </>
+        )}
 
-        <div>
-          <VitalForm onSubmit={handleAdd} />
-        </div>
+        <VitalForm onSubmit={handleAdd} />
       </div>
     </div>
   );

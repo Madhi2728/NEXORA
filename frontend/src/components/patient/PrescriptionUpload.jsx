@@ -1,7 +1,11 @@
 import { useRef, useState } from "react";
 import { UploadCloud, Loader2 } from "lucide-react";
 
-export default function PrescriptionUpload({ onUploaded }) {
+export default function PrescriptionUpload({
+  onUploaded,
+  title = "Upload a prescription",
+  promptText = "Click to choose a photo of your prescription",
+}) {
   const inputRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [file, setFile] = useState(null);
@@ -37,7 +41,7 @@ export default function PrescriptionUpload({ onUploaded }) {
 
   return (
     <div className="bg-slate-800 rounded-xl shadow-sm p-5 space-y-4">
-      <h3 className="font-semibold text-slate-100">Upload a prescription</h3>
+      <h3 className="font-semibold text-slate-100">{title}</h3>
 
       <label
         htmlFor="prescription-file"
@@ -48,9 +52,7 @@ export default function PrescriptionUpload({ onUploaded }) {
         ) : (
           <>
             <UploadCloud className="text-violet-400" size={32} />
-            <span className="text-sm text-slate-400">
-              Click to choose a photo of your prescription
-            </span>
+            <span className="text-sm text-slate-400">{promptText}</span>
             <span className="text-xs text-slate-500">JPG, PNG, or WEBP — up to 10MB</span>
           </>
         )}
