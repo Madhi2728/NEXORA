@@ -1,9 +1,9 @@
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 
 const SEVERITY_STYLE = {
-  severe: { cls: "bg-red-50 border-red-200 text-red-800", badge: "bg-red-600 text-white" },
-  moderate: { cls: "bg-amber-50 border-amber-200 text-amber-800", badge: "bg-amber-500 text-white" },
-  mild: { cls: "bg-sky-50 border-sky-200 text-sky-800", badge: "bg-sky-500 text-white" },
+  severe: { cls: "bg-red-900/30 border-red-800 text-red-300", badge: "bg-red-600 text-white" },
+  moderate: { cls: "bg-amber-900/30 border-amber-800 text-amber-300", badge: "bg-amber-500 text-white" },
+  mild: { cls: "bg-sky-900/30 border-sky-800 text-sky-300", badge: "bg-sky-500 text-white" },
 };
 
 export default function InteractionResults({ result }) {
@@ -14,7 +14,7 @@ export default function InteractionResults({ result }) {
   return (
     <div className="space-y-4">
       {unrecognized.length > 0 && (
-        <div className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-600">
+        <div className="flex items-start gap-2 bg-slate-900/40 border border-slate-700 rounded-lg p-3 text-sm text-slate-300">
           <Info size={16} className="mt-0.5 flex-shrink-0" />
           <span>
             No interaction data available for: <strong>{unrecognized.join(", ")}</strong> (these
@@ -24,7 +24,7 @@ export default function InteractionResults({ result }) {
       )}
 
       {interactions.length === 0 ? (
-        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-emerald-800">
+        <div className="flex items-center gap-2 bg-emerald-900/30 border border-emerald-800 rounded-lg p-4 text-emerald-300">
           <CheckCircle2 size={20} />
           <span className="text-sm font-medium">
             No known interactions found among the recognized drugs.

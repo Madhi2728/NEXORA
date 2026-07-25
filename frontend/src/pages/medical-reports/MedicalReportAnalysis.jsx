@@ -8,10 +8,10 @@ import { Loader2, AlertCircle, Trash2 } from "lucide-react";
 
 function StatusBadge({ status }) {
   const map = {
-    processing: { label: "Analyzing...", cls: "bg-amber-50 text-amber-700", spin: true },
-    done: { label: "Done", cls: "bg-emerald-50 text-emerald-700", spin: false },
-    failed: { label: "Failed", cls: "bg-red-50 text-red-700", spin: false },
-    pending: { label: "Pending", cls: "bg-slate-100 text-slate-600", spin: true },
+    processing: { label: "Analyzing...", cls: "bg-amber-900/40 text-amber-300", spin: true },
+    done: { label: "Done", cls: "bg-emerald-900/40 text-emerald-300", spin: false },
+    failed: { label: "Failed", cls: "bg-red-900/40 text-red-300", spin: false },
+    pending: { label: "Pending", cls: "bg-slate-700 text-slate-300", spin: true },
   };
   const s = map[status] || map.pending;
   return (
@@ -58,36 +58,36 @@ export default function MedicalReportAnalysis() {
 
   return (
     <div className="space-y-4">
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="md:col-span-1 space-y-4">
           {loading ? (
-            <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-slate-500 text-center">
+            <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
               Loading...
             </div>
           ) : !reports.length ? (
-            <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-slate-500 text-center">
+            <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
               No reports uploaded yet.
             </div>
           ) : (
             reports.map((r) => (
-              <div key={r.id} className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+              <div key={r.id} className="bg-slate-800 rounded-xl shadow-sm p-4 space-y-3">
                 <div className="flex gap-4">
                   <img
                     src={prescriptionImageUrl(r.file_path)}
                     alt="Report"
-                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-slate-100"
+                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-slate-700"
                   />
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-medium text-slate-800">
+                        <p className="text-sm font-medium text-slate-100">
                           {new Date(r.created_at).toLocaleString()}
                         </p>
                         <StatusBadge status={r.status} />
                       </div>
                       <button
                         onClick={() => handleDelete(r.id)}
-                        className="text-slate-400 hover:text-red-500"
+                        className="text-slate-500 hover:text-red-500"
                         aria-label="Delete"
                       >
                         <Trash2 size={16} />
@@ -99,7 +99,7 @@ export default function MedicalReportAnalysis() {
                 {r.status === "done" && (
                   <>
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-700 mb-2">
+                      <h3 className="text-sm font-semibold text-slate-200 mb-2">
                         Findings
                       </h3>
                       <ReportFindings findings={r.findings} />
@@ -107,7 +107,7 @@ export default function MedicalReportAnalysis() {
 
                     {r.detected_medicines?.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-slate-700 mb-2">
+                        <h3 className="text-sm font-semibold text-slate-200 mb-2">
                           Medicines mentioned
                         </h3>
                         <div className="grid sm:grid-cols-2 gap-3">
@@ -133,7 +133,7 @@ export default function MedicalReportAnalysis() {
           <PrescriptionUpload onUploaded={handleUpload} />
         </div>
       </div>
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500">
         Findings and medicine detection are automated and for informational purposes only —
         always confirm with your doctor or pharmacist.
       </p>

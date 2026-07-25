@@ -55,19 +55,19 @@ export default function MedicalChatbot() {
         <div className="flex justify-end mb-2">
           <button
             onClick={handleClear}
-            className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1"
+            className="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1"
           >
             <Trash2 size={13} /> Clear chat
           </button>
         </div>
       )}
 
-      <div className="bg-slate-50 rounded-xl border border-slate-100 flex flex-col flex-1 min-h-0">
+      <div className="bg-slate-900/40 rounded-xl border border-slate-700 flex flex-col flex-1 min-h-0">
         <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
           {loading ? (
-            <p className="text-sm text-slate-400 text-center mt-6">Loading...</p>
+            <p className="text-sm text-slate-500 text-center mt-6">Loading...</p>
           ) : messages.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center mt-6">
+            <p className="text-sm text-slate-500 text-center mt-6">
               Ask a general health question, e.g. "What can help with a mild headache?"
             </p>
           ) : (
@@ -77,7 +77,7 @@ export default function MedicalChatbot() {
                 className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {m.role === "assistant" && (
-                  <div className="w-7 h-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-violet-900/40 text-violet-300 flex items-center justify-center flex-shrink-0">
                     <Bot size={14} />
                   </div>
                 )}
@@ -86,8 +86,8 @@ export default function MedicalChatbot() {
                     m.role === "user"
                       ? "bg-violet-600 text-white rounded-br-sm"
                       : m.crisis
-                      ? "bg-red-50 border border-red-200 text-red-800 rounded-bl-sm"
-                      : "bg-slate-100 text-slate-700 rounded-bl-sm"
+                      ? "bg-red-900/40 border border-red-700 text-red-300 rounded-bl-sm"
+                      : "bg-slate-700 text-slate-200 rounded-bl-sm"
                   }`}
                 >
                   {m.crisis && (
@@ -98,7 +98,7 @@ export default function MedicalChatbot() {
                   {m.content}
                 </div>
                 {m.role === "user" && (
-                  <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center flex-shrink-0">
                     <User size={14} />
                   </div>
                 )}
@@ -107,18 +107,18 @@ export default function MedicalChatbot() {
           )}
           {sending && (
             <div className="flex gap-2 justify-start">
-              <div className="w-7 h-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-violet-900/40 text-violet-300 flex items-center justify-center flex-shrink-0">
                 <Bot size={14} />
               </div>
-              <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-3 py-2">
-                <Loader2 size={16} className="animate-spin text-slate-400" />
+              <div className="bg-slate-700 rounded-2xl rounded-bl-sm px-3 py-2">
+                <Loader2 size={16} className="animate-spin text-slate-500" />
               </div>
             </div>
           )}
           <div ref={bottomRef} />
         </div>
 
-        <form onSubmit={handleSend} className="border-t border-slate-100 p-2.5 flex items-center gap-2">
+        <form onSubmit={handleSend} className="border-t border-slate-700 p-2.5 flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white flex items-center justify-center flex-shrink-0 animate-bounce">
             <HeartPulse size={14} />
           </div>
@@ -126,7 +126,7 @@ export default function MedicalChatbot() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a health question..."
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
           <button
             type="submit"
@@ -138,9 +138,9 @@ export default function MedicalChatbot() {
         </form>
       </div>
 
-      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
 
-      <p className="text-xs text-slate-400 mt-2">
+      <p className="text-xs text-slate-500 mt-2">
         General health information only — not a substitute for a doctor. For anything urgent,
         contact emergency services directly.
       </p>

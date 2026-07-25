@@ -52,7 +52,7 @@ export default function HealthDashboard() {
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
               activeType === t.value
                 ? "bg-violet-600 text-white"
-                : "bg-white text-slate-600 border border-slate-200"
+                : "bg-slate-700 text-slate-300 border border-slate-600"
             }`}
           >
             {t.label}
@@ -63,11 +63,11 @@ export default function HealthDashboard() {
       <div className="grid md:grid-cols-3 gap-4">
         <div className="md:col-span-2 space-y-4">
           {loading ? (
-            <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-slate-500 text-center">
+            <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
               Loading...
             </div>
           ) : error ? (
-            <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-red-600 text-center">
+            <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-red-400 text-center">
               {error}
             </div>
           ) : (

@@ -34,7 +34,7 @@ function buildChartData(vitals, type) {
 export default function VitalHistoryChart({ vitals, type }) {
   if (!vitals.length) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-slate-500 text-center">
+      <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
         No readings yet for this metric. Log one above to see the trend here.
       </div>
     );
@@ -43,21 +43,21 @@ export default function VitalHistoryChart({ vitals, type }) {
   const data = buildChartData(vitals, type);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 h-64">
+    <div className="bg-slate-800 rounded-xl shadow-sm p-4 h-64">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip />
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94a3b8" }} />
+          <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} />
+          <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8 }} labelStyle={{ color: "#e2e8f0" }} itemStyle={{ color: "#e2e8f0" }} />
           {type === "blood_pressure" ? (
             <>
-              <Legend />
-              <Line type="monotone" dataKey="systolic" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="diastolic" stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} />
+              <Legend wrapperStyle={{ color: "#94a3b8", fontSize: 12 }} />
+              <Line type="monotone" dataKey="systolic" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="diastolic" stroke="#fb923c" strokeWidth={2} dot={{ r: 3 }} />
             </>
           ) : (
-            <Line type="monotone" dataKey="value" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey="value" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3 }} />
           )}
         </LineChart>
       </ResponsiveContainer>

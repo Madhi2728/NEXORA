@@ -36,22 +36,22 @@ export default function PrescriptionUpload({ onUploaded }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
-      <h3 className="font-semibold text-slate-800">Upload a prescription</h3>
+    <div className="bg-slate-800 rounded-xl shadow-sm p-5 space-y-4">
+      <h3 className="font-semibold text-slate-100">Upload a prescription</h3>
 
       <label
         htmlFor="prescription-file"
-        className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-violet-200 rounded-xl py-8 cursor-pointer hover:bg-violet-50 transition text-center"
+        className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-violet-800 rounded-xl py-8 cursor-pointer hover:bg-violet-900/20 transition text-center"
       >
         {preview ? (
           <img src={preview} alt="Preview" className="max-h-40 rounded-lg object-contain" />
         ) : (
           <>
             <UploadCloud className="text-violet-400" size={32} />
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-slate-400">
               Click to choose a photo of your prescription
             </span>
-            <span className="text-xs text-slate-400">JPG, PNG, or WEBP — up to 10MB</span>
+            <span className="text-xs text-slate-500">JPG, PNG, or WEBP — up to 10MB</span>
           </>
         )}
         <input
@@ -64,7 +64,7 @@ export default function PrescriptionUpload({ onUploaded }) {
         />
       </label>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <button
         onClick={handleSubmit}

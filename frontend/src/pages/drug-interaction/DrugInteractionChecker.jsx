@@ -30,10 +30,10 @@ export default function DrugInteractionChecker() {
   return (
     <div className="space-y-4">
 
-      <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+      <div className="bg-slate-800 rounded-xl shadow-sm p-5 space-y-4">
         <DrugTagInput drugs={drugs} onChange={setDrugs} />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <button
           onClick={handleCheck}
@@ -46,7 +46,7 @@ export default function DrugInteractionChecker() {
 
       <InteractionResults result={result} />
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500">
         Medicine name search covers a broad live list, but interaction checking itself is
         limited to a small set of well-documented pairs — not exhaustive. Always confirm with
         a pharmacist or doctor before starting, stopping, or combining medications.

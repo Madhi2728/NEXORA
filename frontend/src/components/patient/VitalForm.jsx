@@ -28,30 +28,30 @@ export default function VitalForm({ onSubmit }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-5 space-y-3">
-      <h3 className="font-semibold text-slate-800">Log a reading</h3>
+    <form onSubmit={handleSubmit} className="bg-slate-800 rounded-xl shadow-sm p-5 space-y-3">
+      <h3 className="font-semibold text-slate-100">Log a reading</h3>
+      <select
+        className="w-full rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm"
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+      >
+        {VITAL_TYPES.map((t) => (
+          <option key={t.value} value={t.value}>
+            {t.label}
+          </option>
+        ))}
+      </select>
       <div className="flex gap-2">
-        <select
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          {VITAL_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
         <input
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm"
           placeholder={meta.placeholder}
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
-        <span className="self-center text-sm text-slate-500 w-14">{meta.unit}</span>
+        <span className="self-center text-sm text-slate-400 flex-shrink-0">{meta.unit}</span>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <button
         type="submit"

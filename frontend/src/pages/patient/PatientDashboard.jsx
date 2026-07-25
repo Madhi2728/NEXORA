@@ -11,18 +11,18 @@ export default function PatientDashboard() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="relative min-h-screen bg-slate-50 overflow-hidden">
+    <div className="relative min-h-screen bg-slate-950 overflow-hidden">
       {/* Background decoration so the page doesn't feel flat */}
-      <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-200/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 -left-32 w-80 h-80 bg-fuchsia-100/50 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-700/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 -left-32 w-80 h-80 bg-fuchsia-700/15 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-semibold text-slate-800">Patient Dashboard</h1>
-            <p className="text-sm text-slate-500">Welcome, {user?.name}</p>
+            <h1 className="text-xl font-semibold text-slate-100">Patient Dashboard</h1>
+            <p className="text-sm text-slate-400">Welcome, {user?.name}</p>
           </div>
-          <button onClick={logout} className="text-sm text-red-600">
+          <button onClick={logout} className="text-sm text-red-400">
             Log out
           </button>
         </div>
@@ -33,7 +33,7 @@ export default function PatientDashboard() {
             icon={Activity}
             title="Health Dashboard"
             accent="from-violet-500 to-purple-500"
-            iconBg="bg-violet-100 text-violet-600"
+            iconBg="bg-violet-900/40 text-violet-300"
             fullHeight
           >
             <HealthDashboard />
@@ -43,7 +43,7 @@ export default function PatientDashboard() {
             icon={Bot}
             title="AI Health Intelligence"
             accent="from-fuchsia-500 to-pink-500"
-            iconBg="bg-fuchsia-100 text-fuchsia-600"
+            iconBg="bg-fuchsia-900/40 text-fuchsia-300"
             fullHeight
           >
             <MedicalChatbot />
@@ -56,7 +56,7 @@ export default function PatientDashboard() {
             icon={ScanLine}
             title="Prescription OCR"
             accent="from-indigo-500 to-blue-500"
-            iconBg="bg-indigo-100 text-indigo-600"
+            iconBg="bg-indigo-900/40 text-indigo-300"
           >
             <PrescriptionOCR />
           </SectionCard>
@@ -65,23 +65,25 @@ export default function PatientDashboard() {
             icon={ShieldAlert}
             title="Drug Interaction Checker"
             accent="from-amber-500 to-orange-500"
-            iconBg="bg-amber-100 text-amber-600"
+            iconBg="bg-amber-900/40 text-amber-300"
           >
             <DrugInteractionChecker />
           </SectionCard>
         </div>
 
-        {/* Third row: Medical Report Analysis, full width */}
-        <SectionCard
-          icon={FileText}
-          title="Medical Report Analysis"
-          accent="from-emerald-500 to-teal-500"
-          iconBg="bg-emerald-100 text-emerald-600"
-        >
-          <MedicalReportAnalysis />
-        </SectionCard>
+        {/* Third row: Medical Report Analysis, same half-width pattern as above */}
+        <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+          <SectionCard
+            icon={FileText}
+            title="Medical Report Analysis"
+            accent="from-emerald-500 to-teal-500"
+            iconBg="bg-emerald-900/40 text-emerald-300"
+          >
+            <MedicalReportAnalysis />
+          </SectionCard>
+        </div>
 
-        <p className="text-slate-400 text-xs">
+        <p className="text-slate-500 text-xs">
           Reminders and Appointments will be added here in upcoming modules.
         </p>
       </div>

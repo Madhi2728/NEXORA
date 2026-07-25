@@ -50,10 +50,10 @@ export default function DrugTagInput({ drugs, onChange }) {
         {drugs.map((d) => (
           <span
             key={d}
-            className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-sm px-3 py-1 rounded-full"
+            className="inline-flex items-center gap-1 bg-violet-900/40 text-violet-300 text-sm px-3 py-1 rounded-full"
           >
             {d}
-            <button onClick={() => removeDrug(d)} className="hover:text-violet-900">
+            <button onClick={() => removeDrug(d)} className="hover:text-violet-100">
               <X size={14} />
             </button>
           </span>
@@ -70,15 +70,15 @@ export default function DrugTagInput({ drugs, onChange }) {
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
           placeholder="Type a medicine name (brand or generic) and press Enter"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="w-full rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
         />
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg border border-slate-100 overflow-hidden max-h-64 overflow-y-auto">
+          <div className="absolute z-10 mt-1 w-full bg-slate-800 rounded-lg shadow-lg border border-slate-700 overflow-hidden max-h-64 overflow-y-auto">
             {suggestions.map((s) => (
               <button
                 key={s.name}
                 onClick={() => addDrug(s.name)}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-violet-50 flex items-center justify-between gap-2"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-700 text-slate-200 flex items-center justify-between gap-2"
               >
                 <span>{s.name}</span>
                 {s.hasInteractionData && (

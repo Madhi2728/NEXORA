@@ -49,10 +49,10 @@ export default function PrescriptionOCR() {
 
   return (
     <div className="space-y-4">
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="md:col-span-1">
           {loading ? (
-            <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-slate-500 text-center">
+            <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
               Loading...
             </div>
           ) : (
