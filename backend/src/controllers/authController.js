@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { sendOtpEmail } = require("../config/email");
 
 function signToken(user) {
   return jwt.sign(
@@ -110,4 +111,75 @@ async function createStaff(req, res) {
   }
 }
 
-module.exports = { register, login, getCurrentUser, createStaff };
+// POST /api/auth/forgot-password
+async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required." });
+
+    const user = await User.findOne({ where: { email } });
+
+    // Always return a generic success message, whether or not the email
+    // exists, so this endpoint can't be used to discover registered emails.
+    const genericResponse = {
+      message: "If an account with that email exists, a reset code has been sent.",
+    };
+
+    if (!user) return res.json(genericResponse);
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.reset_otp = otp;
+    user.reset_otp_expires = expires;
+    await user.save();
+
+    await sendOtpEmail(user.email, otp);
+
+    return res.json(genericResponse);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Could not process request." });
+  }
+}
+
+// POST /api/auth/reset-password
+async function resetPassword(req, res) {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "Email, OTP, and new password are required." });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user || !user.reset_otp || !user.reset_otp_expires) {
+      return res.status(400).json({ message: "Invalid or expired code." });
+    }
+
+    if (user.reset_otp !== otp || new Date() > new Date(user.reset_otp_expires)) {
+      return res.status(400).json({ message: "Invalid or expired code." });
+    }
+
+    user.password_hash = await bcrypt.hash(newPassword, 10);
+    user.reset_otp = null;
+    user.reset_otp_expires = null;
+    await user.save();
+
+    return res.json({ message: "Password updated. You can now log in." });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Could not reset password." });
+  }
+}
+
+module.exports = {
+  register,
+  login,
+  getCurrentUser,
+  createStaff,
+  forgotPassword,
+  resetPassword,
+};

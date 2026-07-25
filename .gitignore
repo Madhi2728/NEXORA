@@ -1,25 +1,35 @@
+# Dependencies
 node_modules/
 **/node_modules/
 
+# Environment files (contain secrets - never commit these)
 .env
 **/.env
 !.env.example
 !**/.env.example
 
+# Uploaded files (local dev storage - not for version control)
+backend/uploads/
+
+# Build output
 dist/
 build/
 **/dist/
 **/build/
 
+# Logs
 *.log
 npm-debug.log*
 
+# OS files
 .DS_Store
 Thumbs.db
 
+# Editor
 .vscode/
 .idea/
 
+# Python (ai-services)
 __pycache__/
 *.pyc
 .venv/

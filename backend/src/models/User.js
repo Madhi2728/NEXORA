@@ -32,6 +32,14 @@ const User = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    reset_otp: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    reset_otp_expires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "users",

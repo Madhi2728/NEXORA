@@ -1,0 +1,71 @@
+import { FileText, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { prescriptionImageUrl } from "../../utils/fileUrl";
+
+function StatusBadge({ status }) {
+  const map = {
+    processing: { label: "Processing...", cls: "bg-amber-50 text-amber-700", icon: Loader2, spin: true },
+    done: { label: "Done", cls: "bg-emerald-50 text-emerald-700", icon: FileText, spin: false },
+    failed: { label: "Failed", cls: "bg-red-50 text-red-700", icon: AlertCircle, spin: false },
+    pending: { label: "Pending", cls: "bg-slate-100 text-slate-600", icon: Loader2, spin: true },
+  };
+  const s = map[status] || map.pending;
+  const Icon = s.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${s.cls}`}>
+      <Icon size={12} className={s.spin ? "animate-spin" : ""} />
+      {s.label}
+    </span>
+  );
+}
+
+export default function PrescriptionList({ prescriptions, onDelete }) {
+  if (!prescriptions.length) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-slate-500 text-center">
+        No prescriptions uploaded yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {prescriptions.map((p) => (
+        <div key={p.id} className="bg-white rounded-xl shadow-sm p-4 flex gap-4">
+          <img
+            src={prescriptionImageUrl(p.file_path)}
+            alt="Prescription"
+            className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-slate-100"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start gap-2">
+              <div>
+                <p className="text-sm font-medium text-slate-800">
+                  {new Date(p.created_at).toLocaleString()}
+                </p>
+                <StatusBadge status={p.status} />
+              </div>
+              <button
+                onClick={() => onDelete(p.id)}
+                className="text-slate-400 hover:text-red-500 flex-shrink-0"
+                aria-label="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+
+            {p.status === "done" && (
+              <p className="text-sm text-slate-600 mt-2 line-clamp-3 whitespace-pre-wrap">
+                {p.ocr_text || "No text detected."}
+              </p>
+            )}
+            {p.status === "failed" && (
+              <p className="text-sm text-red-500 mt-2">
+                Could not read this image. Try a clearer photo.
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
