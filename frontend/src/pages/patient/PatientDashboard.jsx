@@ -3,6 +3,7 @@ import HealthDashboard from "../dashboard/HealthDashboard";
 import PrescriptionOCR from "../prescription-ocr/PrescriptionOCR";
 import MedicalReportAnalysis from "../medical-reports/MedicalReportAnalysis";
 import DrugInteractionChecker from "../drug-interaction/DrugInteractionChecker";
+import MedicalChatbot from "../chatbot/MedicalChatbot";
 
 export default function PatientDashboard() {
   const { user, logout } = useAuth();
@@ -23,10 +24,10 @@ export default function PatientDashboard() {
       <PrescriptionOCR />
       <MedicalReportAnalysis />
       <DrugInteractionChecker />
+      <MedicalChatbot />
 
       <p className="text-slate-400 text-xs">
-        Reminders, Appointments, and the Chatbot widget will be added here in upcoming
-        modules.
+        Reminders and Appointments will be added here in upcoming modules.
       </p>
     </div>
   );
