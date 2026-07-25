@@ -50,21 +50,20 @@ export default function MedicalChatbot() {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-800">AI Health Intelligence</h2>
-        {messages.length > 0 && (
+    <div className="flex flex-col h-full min-h-0">
+      {messages.length > 0 && (
+        <div className="flex justify-end mb-2">
           <button
             onClick={handleClear}
             className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1"
           >
             <Trash2 size={13} /> Clear chat
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="bg-white rounded-xl shadow-sm flex flex-col h-72">
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="bg-slate-50 rounded-xl border border-slate-100 flex flex-col flex-1 min-h-0">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
           {loading ? (
             <p className="text-sm text-slate-400 text-center mt-6">Loading...</p>
           ) : messages.length === 0 ? (
@@ -139,11 +138,11 @@ export default function MedicalChatbot() {
         </form>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
-      <p className="text-xs text-slate-400">
-        This assistant gives general health information only — it can't diagnose you or replace
-        a doctor. For anything urgent, contact emergency services directly.
+      <p className="text-xs text-slate-400 mt-2">
+        General health information only — not a substitute for a doctor. For anything urgent,
+        contact emergency services directly.
       </p>
     </div>
   );

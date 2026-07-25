@@ -49,7 +49,6 @@ export default function PrescriptionOCR() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-slate-800">Prescription OCR</h2>
       <div className="grid md:grid-cols-3 gap-4">
         <div className="md:col-span-2">
           {loading ? (

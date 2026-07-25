@@ -58,7 +58,6 @@ export default function MedicalReportAnalysis() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-slate-800">Medical Report Analysis</h2>
       <div className="grid md:grid-cols-3 gap-4">
         <div className="md:col-span-2 space-y-4">
           {loading ? (
