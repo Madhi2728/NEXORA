@@ -7,6 +7,7 @@ const VALID_TYPES = [
   "blood_sugar",
   "temperature",
   "spo2",
+  "hemoglobin",
 ];
 
 // POST /api/vitals  (patient only — logs their own reading)

@@ -29,6 +29,7 @@ const Vital = sequelize.define(
             "blood_sugar",
             "temperature",
             "spo2",
+            "hemoglobin",
           ],
         ],
       },

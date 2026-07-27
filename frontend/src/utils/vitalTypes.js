@@ -5,6 +5,7 @@ export const VITAL_TYPES = [
   { value: "blood_sugar", label: "Blood Sugar", unit: "mg/dL", placeholder: "95" },
   { value: "temperature", label: "Temperature", unit: "°C", placeholder: "36.8" },
   { value: "spo2", label: "SpO2", unit: "%", placeholder: "98" },
+  { value: "hemoglobin", label: "Hemoglobin", unit: "g/dL", placeholder: "13.5" },
 ];
 
 export function labelFor(type) {

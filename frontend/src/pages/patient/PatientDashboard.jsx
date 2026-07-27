@@ -2,10 +2,10 @@ import { useAuth } from "../../context/AuthContext";
 import HealthDashboard from "../dashboard/HealthDashboard";
 import PrescriptionOCR from "../prescription-ocr/PrescriptionOCR";
 import MedicalReportAnalysis from "../medical-reports/MedicalReportAnalysis";
-import DrugInteractionChecker from "../drug-interaction/DrugInteractionChecker";
+import MedicineInfoLookup from "../medicine-info/MedicineInfoLookup";
 import MedicalChatbot from "../chatbot/MedicalChatbot";
 import SectionCard from "../../components/common/SectionCard";
-import { Activity, Bot, ScanLine, ShieldAlert, FileText } from "lucide-react";
+import { Activity, Bot, ScanLine, Pill, FileText } from "lucide-react";
 
 export default function PatientDashboard() {
   const { user, logout } = useAuth();
@@ -62,12 +62,12 @@ export default function PatientDashboard() {
           </SectionCard>
 
           <SectionCard
-            icon={ShieldAlert}
-            title="Drug Interaction Checker"
+            icon={Pill}
+            title="Medicine Info Lookup"
             accent="from-amber-500 to-orange-500"
             iconBg="bg-amber-900/40 text-amber-300"
           >
-            <DrugInteractionChecker />
+            <MedicineInfoLookup />
           </SectionCard>
         </div>
 

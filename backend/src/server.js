@@ -16,6 +16,7 @@ const prescriptionRoutes = require("./routes/prescriptionRoutes");
 const medicalReportRoutes = require("./routes/medicalReportRoutes");
 const drugInteractionRoutes = require("./routes/drugInteractionRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const medicineInfoRoutes = require("./routes/medicineInfoRoutes");
 const { warmCache } = require("./config/rxnormClient");
 
 const app = express();
@@ -36,6 +37,7 @@ app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/medical-reports", medicalReportRoutes);
 app.use("/api/drug-interactions", drugInteractionRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/medicine-info", medicineInfoRoutes);
 
 const PORT = process.env.PORT || 5000;
 
