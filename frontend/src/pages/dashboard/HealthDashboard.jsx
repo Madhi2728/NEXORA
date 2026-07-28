@@ -1,21 +1,23 @@
 import { useEffect, useState, useCallback } from "react";
-import { VITAL_TYPES } from "../../utils/vitalTypes";
+import { VITAL_TYPES, unitFor } from "../../utils/vitalTypes";
 import { addVital, getMyVitals, deleteVital } from "../../services/vitalsService";
 import VitalForm from "../../components/patient/VitalForm";
-import VitalHistoryChart from "../../components/patient/VitalHistoryChart";
-import VitalTable from "../../components/patient/VitalTable";
+import MultiVitalChart from "../../components/patient/MultiVitalChart";
+import AllVitalsTable from "../../components/patient/AllVitalsTable";
 
 export default function HealthDashboard() {
+  // activeType now only controls which metric the "Log a reading" form submits as --
+  // the chart and table below always show every metric combined.
   const [activeType, setActiveType] = useState(VITAL_TYPES[0].value);
   const [vitals, setVitals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = useCallback(async (type) => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const data = await getMyVitals(type);
+      const data = await getMyVitals(); // no type filter -- fetch everything
       setVitals(data);
     } catch (err) {
       setError("Could not load your readings.");
@@ -25,25 +27,23 @@ export default function HealthDashboard() {
   }, []);
 
   useEffect(() => {
-    load(activeType);
-  }, [activeType, load]);
+    load();
+  }, [load]);
 
-  async function handleAdd(payload) {
-    await addVital(payload);
-    if (payload.type === activeType) {
-      load(activeType);
-    }
+  async function handleAdd({ value }) {
+    await addVital({ type: activeType, value, unit: unitFor(activeType) });
+    load(); // always refresh the full combined dataset, regardless of which type was logged
   }
 
   async function handleDelete(id) {
     await deleteVital(id);
-    load(activeType);
+    load();
   }
 
   return (
     <div className="space-y-4">
 
-      {/* Metric tabs */}
+      {/* Metric tabs -- now purely select what the form below logs */}
       <div className="flex flex-wrap gap-2">
         {VITAL_TYPES.map((t) => (
           <button
@@ -60,24 +60,22 @@ export default function HealthDashboard() {
         ))}
       </div>
 
-      <div className="space-y-4">
-        {loading ? (
-          <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
-            Loading...
-          </div>
-        ) : error ? (
-          <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-red-400 text-center">
-            {error}
-          </div>
-        ) : (
-          <>
-            <VitalHistoryChart vitals={vitals} type={activeType} />
-            <VitalTable vitals={vitals} onDelete={handleDelete} />
-          </>
-        )}
+      {loading ? (
+        <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
+          Loading...
+        </div>
+      ) : error ? (
+        <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-red-400 text-center">
+          {error}
+        </div>
+      ) : (
+        <>
+          <MultiVitalChart vitals={vitals} />
+          <AllVitalsTable vitals={vitals} onDelete={handleDelete} />
+        </>
+      )}
 
-        <VitalForm onSubmit={handleAdd} />
-      </div>
+      <VitalForm type={activeType} onSubmit={handleAdd} />
     </div>
   );
 }

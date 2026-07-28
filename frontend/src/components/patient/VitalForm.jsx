@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { VITAL_TYPES } from "../../utils/vitalTypes";
 
-export default function VitalForm({ onSubmit }) {
-  const [type, setType] = useState(VITAL_TYPES[0].value);
+export default function VitalForm({ type, onSubmit }) {
   const [value, setValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const meta = VITAL_TYPES.find((t) => t.value === type);
+  const meta = VITAL_TYPES.find((t) => t.value === type) || VITAL_TYPES[0];
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -18,7 +17,7 @@ export default function VitalForm({ onSubmit }) {
     }
     setSubmitting(true);
     try {
-      await onSubmit({ type, value: value.trim(), unit: meta.unit });
+      await onSubmit({ value: value.trim() });
       setValue("");
     } catch (err) {
       setError(err.response?.data?.message || "Could not save reading.");
@@ -29,18 +28,9 @@ export default function VitalForm({ onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-slate-800 rounded-xl shadow-sm p-5 space-y-3">
-      <h3 className="font-semibold text-slate-100">Log a reading</h3>
-      <select
-        className="w-full rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm"
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-      >
-        {VITAL_TYPES.map((t) => (
-          <option key={t.value} value={t.value}>
-            {t.label}
-          </option>
-        ))}
-      </select>
+      <h3 className="font-semibold text-slate-100">
+        Log a reading — <span className="text-violet-300">{meta.label}</span>
+      </h3>
       <div className="flex gap-2 min-w-0">
         <input
           className="flex-1 min-w-0 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm"
