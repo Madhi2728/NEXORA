@@ -1,3 +1,10 @@
+// frontend/src/pages/patient/PatientDashboard.jsx
+//
+// Every row is given a fixed height (h-[560px]) so SectionCard's
+// fullHeight + overflow-y-auto can actually take effect. Without a bounded
+// parent height, "h-full" on the card resolves to nothing and the card
+// just grows with its content instead of scrolling internally.
+
 import { useAuth } from "../../context/AuthContext";
 import HealthDashboard from "../dashboard/HealthDashboard";
 import PrescriptionOCR from "../prescription-ocr/PrescriptionOCR";
@@ -13,8 +20,8 @@ export default function PatientDashboard() {
   return (
     <div className="relative min-h-screen bg-slate-950 overflow-hidden">
       {/* Background decoration so the page doesn't feel flat */}
-      <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-700/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 -left-32 w-80 h-80 bg-fuchsia-700/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-700/20 rounded-full blur-3xl" />
+      <div className="absolute top-1/3 -left-32 w-80 h-80 bg-fuchsia-700/15 rounded-full blur-3xl" />
 
       <div className="relative max-w-7xl mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
@@ -28,7 +35,7 @@ export default function PatientDashboard() {
         </div>
 
         {/* Top row: Health Dashboard + Chatbot side by side, equal height */}
-        <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+        <div className="grid lg:grid-cols-2 gap-6 items-stretch h-[560px]">
           <SectionCard
             icon={Activity}
             title="Health Dashboard"
@@ -50,13 +57,14 @@ export default function PatientDashboard() {
           </SectionCard>
         </div>
 
-        {/* Second row: Prescription OCR + Drug Interaction Checker */}
-        <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+        {/* Second row: Prescription OCR + Medicine Info Lookup */}
+        <div className="grid lg:grid-cols-2 gap-6 items-stretch h-[560px]">
           <SectionCard
             icon={ScanLine}
             title="Prescription OCR"
             accent="from-indigo-500 to-blue-500"
             iconBg="bg-indigo-900/40 text-indigo-300"
+            fullHeight
           >
             <PrescriptionOCR />
           </SectionCard>
@@ -66,18 +74,20 @@ export default function PatientDashboard() {
             title="Medicine Info Lookup"
             accent="from-amber-500 to-orange-500"
             iconBg="bg-amber-900/40 text-amber-300"
+            fullHeight
           >
             <MedicineInfoLookup />
           </SectionCard>
         </div>
 
-        {/* Third row: Medical Report Analysis, same half-width pattern as above */}
-        <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+        {/* Third row: Medical Report Analysis */}
+        <div className="grid lg:grid-cols-2 gap-6 items-stretch h-[560px]">
           <SectionCard
             icon={FileText}
             title="Medical Report Analysis"
             accent="from-emerald-500 to-teal-500"
             iconBg="bg-emerald-900/40 text-emerald-300"
+            fullHeight
           >
             <MedicalReportAnalysis />
           </SectionCard>

@@ -1,22 +1,53 @@
-export default function SectionCard({ icon: Icon, title, accent = "from-violet-500 to-purple-500", iconBg = "bg-violet-900/40 text-violet-300", fullHeight = false, headerExtra, children }) {
+// frontend/src/components/common/SectionCard.jsx
+//
+// Reusable card wrapper used by every dashboard section (Health Dashboard,
+// AI Health Intelligence, Prescription OCR, Medicine Info Lookup, Medical
+// Report Analysis). When `fullHeight` is set, the card fills its grid cell
+// and its content area scrolls independently — the header (icon + title)
+// stays fixed, only the body below it scrolls.
+
+export default function SectionCard({
+  icon: Icon,
+  title,
+  accent = "from-violet-500 to-purple-500",
+  iconBg = "bg-violet-900/40 text-violet-300",
+  fullHeight = false,
+  headerExtra,
+  children,
+}) {
   return (
     <div
-      className={`rounded-2xl shadow-sm border border-slate-700 bg-slate-800 ${
+      className={`rounded-2xl shadow-sm border border-slate-700 bg-slate-800 overflow-hidden ${
         fullHeight ? "h-full flex flex-col" : ""
       }`}
     >
+      {/* Top accent bar */}
       <div className={`h-1.5 rounded-t-2xl bg-gradient-to-r ${accent}`} />
+
       <div className={`p-5 ${fullHeight ? "flex-1 flex flex-col min-h-0" : ""}`}>
-        <div className="flex items-center justify-between mb-4">
+        {/* Header — stays fixed, never scrolls */}
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+            <div
+              className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}
+            >
               <Icon size={18} />
             </div>
             <h2 className="font-semibold text-slate-100">{title}</h2>
           </div>
           {headerExtra}
         </div>
-        <div className={fullHeight ? "flex-1 flex flex-col min-h-0" : ""}>{children}</div>
+
+        {/* Content — this is the ONLY part that scrolls */}
+        <div
+          className={
+            fullHeight
+              ? "flex-1 flex flex-col min-h-0 overflow-y-auto pr-1"
+              : ""
+          }
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
