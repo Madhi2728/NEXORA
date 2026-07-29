@@ -1,8 +1,23 @@
+// backend/src/config/openaiClient.js
+//
+// Sends the conversation to OpenAI first; if that fails (bad/expired key,
+// rate limit, quota exceeded, network error), automatically retries with
+// Groq using the same SYSTEM_PROMPT so the chatbot keeps working.
+//
+// .env needs (you already have both):
+//   OPENAI_API_KEY=sk-...
+//   OPENAI_MODEL=gpt-5.4-mini
+//   GROQ_API_KEY=gsk_...
+// Optional: CHAT_PROVIDER=openai | groq | auto   (default: auto)
+
 const API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
 
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_MODEL = "llama-3.3-70b-versatile";
+
 function isConfigured() {
-  return Boolean(API_KEY);
+  return Boolean(API_KEY) || Boolean(GROQ_API_KEY);
 }
 
 const SYSTEM_PROMPT = `You are the health information assistant inside the Nexora Health app.
@@ -15,14 +30,8 @@ Guidelines:
 - Keep answers concise and easy to understand, avoid unnecessary jargon.
 - Do not claim to access the person's personal medical records unless the app has explicitly given you that data in this conversation.`;
 
-/**
- * Sends the conversation to OpenAI and returns the assistant's reply text.
- * `history` is an array of { role: "user"|"assistant", content: string }.
- */
-async function getChatReply(history) {
-  if (!isConfigured()) {
-    throw new Error("OpenAI is not configured (missing OPENAI_API_KEY).");
-  }
+async function callOpenAI(history) {
+  if (!API_KEY) throw new Error("OpenAI is not configured (missing OPENAI_API_KEY).");
 
   const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...history];
 
@@ -47,6 +56,48 @@ async function getChatReply(history) {
 
   const data = await response.json();
   return data.choices?.[0]?.message?.content?.trim() || "";
+}
+
+async function callGroq(history) {
+  if (!GROQ_API_KEY) throw new Error("Groq is not configured (missing GROQ_API_KEY).");
+
+  const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...history];
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages,
+      max_tokens: 500,
+      temperature: 0.4,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Groq request failed (${response.status}): ${errText}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content?.trim() || "";
+}
+
+async function getChatReply(history) {
+  const provider = process.env.CHAT_PROVIDER || "auto";
+
+  if (provider === "groq") return callGroq(history);
+  if (provider === "openai") return callOpenAI(history);
+
+  try {
+    return await callOpenAI(history);
+  } catch (err) {
+    console.warn("OpenAI failed, falling back to Groq:", err.message);
+    return callGroq(history);
+  }
 }
 
 module.exports = { getChatReply, isConfigured };
