@@ -49,7 +49,7 @@ export default function BookAppointmentModal({ doctor, hospital, onClose, onConf
   }
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4">
       <div className="bg-slate-800 rounded-xl p-5 w-full max-w-sm space-y-3 border border-slate-700">
         <div className="flex justify-between items-center">
           <h3 className="font-semibold text-slate-100">Book with {doctor.name}</h3>
