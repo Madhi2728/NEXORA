@@ -8,6 +8,9 @@ require("./models/Vital"); // registers the model so sequelize.sync() creates it
 require("./models/Prescription");
 require("./models/MedicalReport");
 require("./models/ChatMessage");
+require("./models/Hospital");
+require("./models/DoctorProfile");
+require("./models/Appointment");
 
 const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
@@ -17,6 +20,8 @@ const medicalReportRoutes = require("./routes/medicalReportRoutes");
 const drugInteractionRoutes = require("./routes/drugInteractionRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const medicineInfoRoutes = require("./routes/medicineInfoRoutes");
+const hospitalRoutes = require("./routes/hospitalRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
 const { warmCache } = require("./config/rxnormClient");
 
 const app = express();
@@ -38,6 +43,8 @@ app.use("/api/medical-reports", medicalReportRoutes);
 app.use("/api/drug-interactions", drugInteractionRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/medicine-info", medicineInfoRoutes);
+app.use("/api/hospitals", hospitalRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 const PORT = process.env.PORT || 5000;
 
