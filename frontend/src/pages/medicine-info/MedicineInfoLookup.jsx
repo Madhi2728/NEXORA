@@ -129,6 +129,13 @@ export default function MedicineInfoLookup() {
             </div>
           ) : (
             <>
+              {result.limitedInfo && (
+                <div className="text-xs text-sky-300 bg-sky-900/30 border border-sky-800 rounded-lg p-2">
+                  Not in the FDA database (likely not US-marketed) — showing a general
+                  description from Wikipedia instead. Dosage and warnings aren't available from
+                  this source; check the package insert or ask a pharmacist.
+                </div>
+              )}
               <ExpandableText label="Purpose / Indications" text={result.purpose} />
               <ExpandableText label="Dosage" text={result.dosage} />
               <ExpandableText label="Warnings" text={result.warnings} />

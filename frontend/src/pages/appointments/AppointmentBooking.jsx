@@ -5,6 +5,7 @@ import {
   bookAppointment,
 } from "../../services/appointmentService";
 import HospitalMap from "../../components/patient/HospitalMap";
+import HospitalSearchBar from "../../components/patient/HospitalSearchBar";
 import DoctorList from "../../components/patient/DoctorList";
 import BookAppointmentModal from "../../components/patient/BookAppointmentModal";
 
@@ -16,6 +17,8 @@ export default function AppointmentBooking() {
   const [doctors, setDoctors] = useState([]);
   const [bookingDoctor, setBookingDoctor] = useState(null);
   const [message, setMessage] = useState("");
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
+  const [mapZoom, setMapZoom] = useState(13);
 
   useEffect(() => {
     listHospitals()
@@ -26,12 +29,21 @@ export default function AppointmentBooking() {
   async function handleSelectHospital(h) {
     setSelectedHospital(h);
     setMessage("");
+    setMapCenter([h.latitude, h.longitude]);
+    setMapZoom(15);
     try {
       const docs = await listDoctorsForHospital(h.id);
       setDoctors(docs);
     } catch {
       setDoctors([]);
     }
+  }
+
+  function handleGoToPlace(coords) {
+    setMapCenter(coords);
+    setMapZoom(13);
+    setSelectedHospital(null);
+    setDoctors([]);
   }
 
   async function handleConfirmBooking(payload) {
@@ -41,7 +53,18 @@ export default function AppointmentBooking() {
 
   return (
     <div className="space-y-3">
-      <HospitalMap hospitals={hospitals} onSelect={handleSelectHospital} center={DEFAULT_CENTER} />
+      <HospitalSearchBar
+        hospitals={hospitals}
+        onSelectHospital={handleSelectHospital}
+        onGoToPlace={handleGoToPlace}
+      />
+
+      <HospitalMap
+        hospitals={hospitals}
+        onSelect={handleSelectHospital}
+        center={mapCenter}
+        zoom={mapZoom}
+      />
 
       {selectedHospital ? (
         <div>
@@ -51,7 +74,7 @@ export default function AppointmentBooking() {
         </div>
       ) : (
         <p className="text-sm text-slate-400 text-center py-2">
-          Click a marker on the map to see available doctors.
+          Search or click a marker on the map to see available doctors.
         </p>
       )}
 

@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 
 // Leaflet's default marker icons don't resolve correctly under most bundlers,
@@ -12,10 +13,22 @@ const hospitalIcon = new L.Icon({
   popupAnchor: [1, -34],
 });
 
-export default function HospitalMap({ hospitals, onSelect, center }) {
+// MapContainer's `center` prop only sets the *initial* view -- this helper
+// lets us programmatically pan/zoom the map whenever center/zoom change
+// (e.g. after a place search or picking a hospital from the search list).
+function RecenterMap({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, zoom, { duration: 1 });
+  }, [center, zoom, map]);
+  return null;
+}
+
+export default function HospitalMap({ hospitals, onSelect, center, zoom = 13 }) {
   return (
     <div className="h-64 rounded-xl overflow-hidden border border-slate-700">
-      <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
+      <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
+        <RecenterMap center={center} zoom={zoom} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -28,4 +28,5 @@ module.exports = [
   { name: "Pantoprazole", aliases: ["protonix", "pan 40", "pan-40", "pan40"], category: "tablet", commonUse: "Acid reflux and stomach ulcers" },
   { name: "Furosemide", aliases: ["lasix"], category: "tablet", commonUse: "Fluid retention (diuretic)" },
   { name: "Clopidogrel", aliases: ["plavix"], category: "tablet", commonUse: "Blood clot prevention" },
+  { name: "Mefenamic Acid", aliases: ["meftal", "meftal spas", "meftal-spas", "meftalspas"], category: "tablet", commonUse: "Pain relief, often combined with dicyclomine for menstrual/abdominal cramps (common brand: Meftal Spas)" },
 ];
