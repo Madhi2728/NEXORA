@@ -1,4 +1,16 @@
-import { useRef, useState } from "react";
+// frontend/src/components/patient/PrescriptionUpload.jsx
+//
+// Fix: the file input id was hardcoded ("prescription-file"), so if this
+// component is reused elsewhere (e.g. for report uploads), two instances
+// on the same page end up with duplicate ids. A <label htmlFor="..."> binds
+// to the FIRST element with that id in the DOM, so clicking the second
+// upload box's label was actually triggering the FIRST box's file input —
+// which is why a report image was landing in the Prescription OCR preview.
+//
+// useId() generates a unique, stable id per component instance, so this
+// bug goes away even if the same component is rendered multiple times.
+
+import { useId, useRef, useState } from "react";
 import { UploadCloud, Loader2 } from "lucide-react";
 
 export default function PrescriptionUpload({
@@ -6,6 +18,7 @@ export default function PrescriptionUpload({
   title = "Upload a prescription",
   promptText = "Click to choose a photo of your prescription",
 }) {
+  const inputId = useId(); // unique per render instance
   const inputRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [file, setFile] = useState(null);
@@ -44,7 +57,7 @@ export default function PrescriptionUpload({
       <h3 className="font-semibold text-slate-100">{title}</h3>
 
       <label
-        htmlFor="prescription-file"
+        htmlFor={inputId}
         className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-violet-800 rounded-xl py-8 cursor-pointer hover:bg-violet-900/20 transition text-center"
       >
         {preview ? (
@@ -57,7 +70,7 @@ export default function PrescriptionUpload({
           </>
         )}
         <input
-          id="prescription-file"
+          id={inputId}
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
@@ -70,8 +83,8 @@ export default function PrescriptionUpload({
 
       <button
         onClick={handleSubmit}
-        disabled={!file || uploading}
         className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-lg py-2 text-sm font-medium transition"
+        disabled={uploading}
       >
         {uploading && <Loader2 size={16} className="animate-spin" />}
         {uploading ? "Uploading..." : "Upload & extract text"}
