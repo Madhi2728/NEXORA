@@ -1,5 +1,8 @@
+// frontend/src/components/patient/PrescriptionList.jsx
+
 import { FileText, Loader2, AlertCircle, Trash2 } from "lucide-react";
 import { prescriptionImageUrl } from "../../utils/fileUrl";
+import PrescriptionPdfExport from "./PrescriptionPdfExport";
 
 function StatusBadge({ status }) {
   const map = {
@@ -18,7 +21,7 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function PrescriptionList({ prescriptions, onDelete }) {
+export default function PrescriptionList({ prescriptions, onDelete, patientName }) {
   if (!prescriptions.length) {
     return (
       <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
@@ -44,13 +47,19 @@ export default function PrescriptionList({ prescriptions, onDelete }) {
                 </p>
                 <StatusBadge status={p.status} />
               </div>
-              <button
-                onClick={() => onDelete(p.id)}
-                className="text-slate-500 hover:text-red-500 flex-shrink-0"
-                aria-label="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
+
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {p.status === "done" && (
+                  <PrescriptionPdfExport prescription={p} patientName={patientName} />
+                )}
+                <button
+                  onClick={() => onDelete(p.id)}
+                  className="text-slate-500 hover:text-red-500"
+                  aria-label="Delete"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
 
             {p.status === "done" && (
