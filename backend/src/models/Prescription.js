@@ -34,6 +34,13 @@ const Prescription = sequelize.define(
       allowNull: false,
       defaultValue: "pending",
     },
+    detected_medicines: {
+      // Array of { name, aliases, category, commonUse } -- same shape as
+      // Medical Report Analysis, so both can share the same table/PDF code.
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
     notes: {
       type: DataTypes.TEXT,
       allowNull: true,

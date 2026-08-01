@@ -19,6 +19,7 @@ export default function AppointmentBooking() {
   const [message, setMessage] = useState("");
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapZoom, setMapZoom] = useState(13);
+  const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
     listHospitals()
@@ -39,11 +40,14 @@ export default function AppointmentBooking() {
     }
   }
 
-  function handleGoToPlace(coords) {
-    setMapCenter(coords);
-    setMapZoom(13);
+  function handleSearchResults(results) {
+    setSearchResults(results);
     setSelectedHospital(null);
     setDoctors([]);
+    if (results.length) {
+      setMapCenter([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
+      setMapZoom(13);
+    }
   }
 
   async function handleConfirmBooking(payload) {
@@ -56,15 +60,23 @@ export default function AppointmentBooking() {
       <HospitalSearchBar
         hospitals={hospitals}
         onSelectHospital={handleSelectHospital}
-        onGoToPlace={handleGoToPlace}
+        onSearchResults={handleSearchResults}
       />
 
       <HospitalMap
         hospitals={hospitals}
+        searchResults={searchResults}
         onSelect={handleSelectHospital}
         center={mapCenter}
         zoom={mapZoom}
       />
+
+      {searchResults.length > 0 && (
+        <p className="text-xs text-slate-500">
+          Grey pins are real places from OpenStreetMap search results, shown for reference —
+          only the colored pins (our demo hospitals/clinics) are bookable right now.
+        </p>
+      )}
 
       {selectedHospital ? (
         <div>
@@ -74,7 +86,7 @@ export default function AppointmentBooking() {
         </div>
       ) : (
         <p className="text-sm text-slate-400 text-center py-2">
-          Search or click a marker on the map to see available doctors.
+          Search or click a colored marker on the map to see available doctors.
         </p>
       )}
 
@@ -90,7 +102,7 @@ export default function AppointmentBooking() {
       )}
 
       <p className="text-xs text-slate-500">
-        Demo data — these hospitals/clinics and doctor schedules are for demonstration, not real
+        Demo data — our hospitals/clinics and doctor schedules are for demonstration, not real
         bookable providers yet.
       </p>
     </div>

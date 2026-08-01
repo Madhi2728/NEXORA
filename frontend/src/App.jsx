@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import MouseGlowOverlay from "./components/common/MouseGlowOverlay";
 import AppGuideWidget from "./components/common/AppGuideWidget";
+import CursorGridOverlay from "./components/common/CursorGridOverlay";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -24,6 +25,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CursorGridOverlay />
         <MouseGlowOverlay />
         <AppGuideWidget />
         <Routes>

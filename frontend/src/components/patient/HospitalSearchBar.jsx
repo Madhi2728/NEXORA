@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Search, MapPin, Loader2 } from "lucide-react";
 
-export default function HospitalSearchBar({ hospitals, onSelectHospital, onGoToPlace }) {
+export default function HospitalSearchBar({ hospitals, onSelectHospital, onSearchResults }) {
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
 
-  const matches = query.trim()
+  const localMatches = query.trim()
     ? hospitals.filter(
         (h) =>
           h.name.toLowerCase().includes(query.trim().toLowerCase()) ||
@@ -14,24 +14,28 @@ export default function HospitalSearchBar({ hospitals, onSelectHospital, onGoToP
       )
     : [];
 
-  async function handleSearchPlace() {
+  async function handleSearch() {
     if (!query.trim()) return;
     setSearching(true);
     setError("");
     try {
+      // Broad, free OpenStreetMap search -- returns real-world places
+      // (including real hospitals/clinics if the query matches one),
+      // not just our own demo dataset.
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=8&q=${encodeURIComponent(
           query.trim()
         )}`
       );
       const data = await res.json();
       if (!data.length) {
-        setError("Location not found. Try a different place or city name.");
+        setError("Nothing found for that search. Try a different name or place.");
+        onSearchResults([]);
         return;
       }
-      onGoToPlace([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+      onSearchResults(data);
     } catch (err) {
-      setError("Could not search that location right now.");
+      setError("Could not search right now.");
     } finally {
       setSearching(false);
     }
@@ -43,12 +47,12 @@ export default function HospitalSearchBar({ hospitals, onSelectHospital, onGoToP
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearchPlace())}
-          placeholder="Search a hospital/clinic name, or a place/city..."
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+          placeholder="Search hospitals, clinics, or a place/city..."
           className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
         />
         <button
-          onClick={handleSearchPlace}
+          onClick={handleSearch}
           disabled={searching || !query.trim()}
           className="bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-60 text-white rounded-lg px-3 py-2 text-sm flex items-center gap-1.5 flex-shrink-0"
         >
@@ -58,9 +62,10 @@ export default function HospitalSearchBar({ hospitals, onSelectHospital, onGoToP
 
       {error && <p className="text-xs text-red-400">{error}</p>}
 
-      {matches.length > 0 && (
+      {localMatches.length > 0 && (
         <div className="bg-slate-900/40 border border-slate-700 rounded-lg overflow-hidden max-h-32 overflow-y-auto">
-          {matches.map((h) => (
+          <p className="text-[11px] text-slate-500 px-3 pt-2">Bookable on Nexora:</p>
+          {localMatches.map((h) => (
             <button
               key={h.id}
               onClick={() => onSelectHospital(h)}

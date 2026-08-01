@@ -1,8 +1,6 @@
-// frontend/src/components/patient/PrescriptionList.jsx
-
-import { FileText, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { FileText, Loader2, AlertCircle, Trash2, Download } from "lucide-react";
 import { prescriptionImageUrl } from "../../utils/fileUrl";
-import PrescriptionPdfExport from "./PrescriptionPdfExport";
+import { generatePrescriptionPdf } from "../../utils/pdfGenerator";
 
 function StatusBadge({ status }) {
   const map = {
@@ -21,7 +19,7 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function PrescriptionList({ prescriptions, onDelete, patientName }) {
+export default function PrescriptionList({ prescriptions, onDelete }) {
   if (!prescriptions.length) {
     return (
       <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
@@ -33,46 +31,74 @@ export default function PrescriptionList({ prescriptions, onDelete, patientName 
   return (
     <div className="space-y-3">
       {prescriptions.map((p) => (
-        <div key={p.id} className="bg-slate-800 rounded-xl shadow-sm p-4 flex gap-4">
-          <img
-            src={prescriptionImageUrl(p.file_path)}
-            alt="Prescription"
-            className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-slate-700"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start gap-2">
-              <div>
-                <p className="text-sm font-medium text-slate-100">
-                  {new Date(p.created_at).toLocaleString()}
+        <div key={p.id} className="bg-slate-800 rounded-xl shadow-sm p-4 space-y-3">
+          <div className="flex gap-4">
+            <img
+              src={prescriptionImageUrl(p.file_path)}
+              alt="Prescription"
+              className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-slate-700"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-start gap-2">
+                <div>
+                  <p className="text-sm font-medium text-slate-100">
+                    {new Date(p.created_at).toLocaleString()}
+                  </p>
+                  <StatusBadge status={p.status} />
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {p.status === "done" && (
+                    <button
+                      onClick={() => generatePrescriptionPdf(p)}
+                      className="text-slate-400 hover:text-violet-300 flex items-center gap-1 text-xs"
+                      aria-label="Download PDF"
+                    >
+                      <Download size={14} /> PDF
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onDelete(p.id)}
+                    className="text-slate-400 hover:text-red-400"
+                    aria-label="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {p.status === "done" && (
+                <p className="text-sm text-slate-300 mt-2 line-clamp-3 whitespace-pre-wrap">
+                  {p.ocr_text || "No text detected."}
                 </p>
-                <StatusBadge status={p.status} />
-              </div>
-
-              <div className="flex items-center gap-3 flex-shrink-0">
-                {p.status === "done" && (
-                  <PrescriptionPdfExport prescription={p} patientName={patientName} />
-                )}
-                <button
-                  onClick={() => onDelete(p.id)}
-                  className="text-slate-500 hover:text-red-500"
-                  aria-label="Delete"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              )}
+              {p.status === "failed" && (
+                <p className="text-sm text-red-400 mt-2">
+                  Could not read this image. Try a clearer photo.
+                </p>
+              )}
             </div>
-
-            {p.status === "done" && (
-              <p className="text-sm text-slate-300 mt-2 line-clamp-3 whitespace-pre-wrap">
-                {p.ocr_text || "No text detected."}
-              </p>
-            )}
-            {p.status === "failed" && (
-              <p className="text-sm text-red-500 mt-2">
-                Could not read this image. Try a clearer photo.
-              </p>
-            )}
           </div>
+
+          {p.status === "done" && p.detected_medicines?.length > 0 && (
+            <div className="bg-slate-900/40 rounded-lg overflow-hidden border border-slate-700">
+              <table className="w-full text-xs">
+                <thead className="bg-slate-900/60 text-slate-400">
+                  <tr>
+                    <th className="text-left px-3 py-1.5 font-medium">Medicine</th>
+                    <th className="text-left px-3 py-1.5 font-medium">Common Use</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {p.detected_medicines.map((m) => (
+                    <tr key={m.name} className="border-t border-slate-700">
+                      <td className="px-3 py-1.5 text-slate-200 font-medium">{m.name}</td>
+                      <td className="px-3 py-1.5 text-slate-400">{m.commonUse}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       ))}
     </div>

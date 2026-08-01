@@ -1,6 +1,7 @@
 const path = require("path");
 const Prescription = require("../models/Prescription");
 const { recognizeText } = require("../utils/ocrEngine");
+const { detectMedicines } = require("../utils/reportAnalyzer");
 
 // POST /api/prescriptions  (patient only, multipart/form-data field "image")
 async function uploadPrescription(req, res) {
@@ -18,8 +19,6 @@ async function uploadPrescription(req, res) {
       status: "processing",
     });
 
-    // Respond immediately so the UI can show "processing" right away,
-    // then run OCR in the background and update the record when it's done.
     res.status(201).json({ prescription });
 
     runOcr(prescription, req.file.path);
@@ -29,11 +28,14 @@ async function uploadPrescription(req, res) {
   }
 }
 
-// Runs OCR on the saved image and updates the DB row afterward.
+// Runs OCR + medicine detection in the background, then updates the DB row.
 async function runOcr(prescription, absoluteFilePath) {
   try {
     const text = await recognizeText(absoluteFilePath);
+    const medicines = detectMedicines(text);
+
     prescription.ocr_text = text.trim();
+    prescription.detected_medicines = medicines;
     prescription.status = "done";
     await prescription.save();
   } catch (err) {

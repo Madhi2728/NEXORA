@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { uploadReport, getMyReports, deleteReport } from "../../services/medicalReportService";
 import { prescriptionImageUrl } from "../../utils/fileUrl";
+import { generateReportPdf } from "../../utils/pdfGenerator";
 import PrescriptionUpload from "../../components/patient/PrescriptionUpload";
 import ReportFindings from "../../components/patient/ReportFindings";
 import MedicineCard from "../../components/patient/MedicineCard";
-import { Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { Loader2, AlertCircle, Trash2, Download } from "lucide-react";
 
 function StatusBadge({ status }) {
   const map = {
@@ -85,13 +86,24 @@ export default function MedicalReportAnalysis() {
                         </p>
                         <StatusBadge status={r.status} />
                       </div>
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="text-slate-500 hover:text-red-500"
-                        aria-label="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {r.status === "done" && (
+                          <button
+                            onClick={() => generateReportPdf(r)}
+                            className="text-slate-400 hover:text-violet-300 flex items-center gap-1 text-xs"
+                            aria-label="Download PDF"
+                          >
+                            <Download size={14} /> PDF
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          className="text-slate-400 hover:text-red-400"
+                          aria-label="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -99,9 +111,7 @@ export default function MedicalReportAnalysis() {
                 {r.status === "done" && (
                   <>
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-200 mb-2">
-                        Findings
-                      </h3>
+                      <h3 className="text-sm font-semibold text-slate-200 mb-2">Findings</h3>
                       <ReportFindings findings={r.findings} />
                     </div>
 
@@ -121,7 +131,7 @@ export default function MedicalReportAnalysis() {
                 )}
 
                 {r.status === "failed" && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-red-400">
                     Could not analyze this image. Try a clearer photo.
                   </p>
                 )}
@@ -129,7 +139,7 @@ export default function MedicalReportAnalysis() {
             ))
           )}
         </div>
-        <div>
+        <div className="md:col-span-1">
           <PrescriptionUpload
             onUploaded={handleUpload}
             title="Upload a report"
