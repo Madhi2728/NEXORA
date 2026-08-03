@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 
 const bookableIcon = new L.Icon({
@@ -47,26 +47,26 @@ export default function HospitalMap({ hospitals, searchResults = [], onSelect, c
             icon={bookableIcon}
             eventHandlers={{ click: () => onSelect(h) }}
           >
-            <Popup>
+            <Tooltip direction="top" offset={[0, -10]} opacity={1}>
               <strong>{h.name}</strong>
               <br />
-              {h.type === "clinic" ? "Clinic" : "Hospital"} — bookable on Nexora
+              {h.type === "clinic" ? "Clinic" : "Hospital"} — bookable
               <br />
               {h.address}
-            </Popup>
+            </Tooltip>
           </Marker>
         ))}
 
         {/* Real-world search results -- informational only, not bookable yet */}
         {searchResults.map((r, i) => (
           <Marker key={`search-${i}`} position={[r.lat, r.lon]} icon={infoIcon}>
-            <Popup>
+            <Tooltip direction="top" offset={[0, -10]} opacity={1}>
               <strong>{r.display_name.split(",")[0]}</strong>
               <br />
               <span style={{ color: "#64748b", fontSize: 12 }}>{r.display_name}</span>
               <br />
               <em>Not yet connected with Nexora</em>
-            </Popup>
+            </Tooltip>
           </Marker>
         ))}
       </MapContainer>
