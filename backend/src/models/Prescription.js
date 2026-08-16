@@ -36,7 +36,28 @@ const Prescription = sequelize.define(
     },
     detected_medicines: {
       // Array of { name, aliases, category, commonUse } -- same shape as
-      // Medical Report Analysis, so both can share the same table/PDF code.
+      // Medical Report Analysis, so both can share the same table/PDF co...
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
+    patient_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    doctor_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    facility_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    document_date: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    structured_medications: {
       type: DataTypes.JSONB,
       allowNull: true,
       defaultValue: [],

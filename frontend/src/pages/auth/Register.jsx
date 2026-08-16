@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Mail, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AuthLayout from "../../components/common/AuthLayout";
 import PasswordInput from "../../components/common/PasswordInput";
 import RoleSelector, { ALL_ROLES } from "../../components/common/RoleSelector";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 
 const ROLE_HOME = { admin: "/admin", doctor: "/doctor", patient: "/patient" };
 
@@ -36,68 +40,68 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl shadow-black/20 border border-white/50 p-8 animate-fade-in">
-        <h1 className="text-2xl font-semibold text-slate-800 mb-1">Create your account</h1>
-        <p className="text-slate-500 mb-6 text-sm">
-          Admin accounts are created by an existing admin, not here.
-        </p>
+      <h3 className="text-2xl font-semibold text-foreground">Create your account</h3>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Admin accounts are created by an existing admin, not here.
+      </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Full name</label>
-            <input
-              required
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <PasswordInput
-              required
-              minLength={6}
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">I am a</label>
-            <RoleSelector
-              roles={registerRoles}
-              value={form.role}
-              onChange={(role) => setForm({ ...form, role })}
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Full name</Label>
+          <Input
+            id="name"
+            required
+            placeholder="Dr. Anita Rao"
+            className="h-11 bg-background/50"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Work email</Label>
+          <Input
+            id="email"
+            type="email"
+            required
+            placeholder="you@clinic.org"
+            className="h-11 bg-background/50"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
+            id="password"
+            required
+            minLength={6}
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>I am a</Label>
+          <RoleSelector
+            roles={registerRoles}
+            value={form.role}
+            onChange={(role) => setForm({ ...form, role })}
+          />
+        </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60 text-white rounded-lg py-2.5 font-semibold transition shadow-lg shadow-violet-600/20"
-          >
-            {submitting ? "Creating account..." : "Create Account"}
-          </button>
-        </form>
+        <Button type="submit" className="w-full" disabled={submitting}>
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+          Register & verify email
+        </Button>
+      </form>
 
-        <p className="text-sm text-slate-500 mt-6 text-center">
-          Already have an account?{" "}
-          <Link to="/login" className="text-violet-600 font-medium">
-            Sign in
-          </Link>
-        </p>
-      </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link to="/login" className="font-medium text-primary hover:underline">
+          Sign in
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

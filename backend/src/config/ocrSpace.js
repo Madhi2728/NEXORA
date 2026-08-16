@@ -34,6 +34,7 @@ async function recognizeText(absoluteFilePath) {
   });
 
   const result = await response.json();
+  console.log("=== OCR.space RAW RESPONSE ===", JSON.stringify(result, null, 2));
 
   if (result.IsErroredOnProcessing) {
     const message = Array.isArray(result.ErrorMessage)

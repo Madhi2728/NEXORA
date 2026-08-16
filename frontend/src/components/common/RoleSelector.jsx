@@ -12,7 +12,7 @@ export const ALL_ROLES = [
  */
 export default function RoleSelector({ roles = ALL_ROLES, value, onChange }) {
   return (
-    <div className={`grid gap-3`} style={{ gridTemplateColumns: `repeat(${roles.length}, minmax(0, 1fr))` }}>
+    <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${roles.length}, minmax(0, 1fr))` }}>
       {roles.map(({ value: v, label, icon: Icon, desc, disabled, disabledNote }) => {
         const selected = value === v;
         return (
@@ -21,30 +21,30 @@ export default function RoleSelector({ roles = ALL_ROLES, value, onChange }) {
               type="button"
               disabled={disabled}
               onClick={() => !disabled && onChange(v)}
-              className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+              className={`w-full text-left p-3 rounded-xl border transition-all ${
                 disabled
-                  ? "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed"
+                  ? "border-border/60 bg-muted/40 opacity-60 cursor-not-allowed"
                   : selected
-                  ? "border-violet-500 bg-violet-50"
-                  : "border-slate-200 bg-white hover:border-violet-200"
+                    ? "border-primary bg-primary/15"
+                    : "border-border/60 bg-background/40 hover:border-primary/50"
               }`}
             >
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${
                   disabled
-                    ? "bg-slate-200 text-slate-400"
+                    ? "bg-muted text-muted-foreground"
                     : selected
-                    ? "bg-violet-600 text-white"
-                    : "bg-slate-100 text-slate-500"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground"
                 }`}
               >
                 <Icon size={16} />
               </div>
-              <p className="text-sm font-semibold text-slate-800">{label}</p>
-              <p className="text-xs text-slate-500">{desc}</p>
+              <p className="text-sm font-semibold text-foreground">{label}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
             </button>
             {disabled && disabledNote && (
-              <p className="text-[11px] text-slate-400 mt-1 px-1">{disabledNote}</p>
+              <p className="text-[11px] text-muted-foreground mt-1 px-1">{disabledNote}</p>
             )}
           </div>
         );

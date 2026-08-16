@@ -39,6 +39,28 @@ const MedicalReport = sequelize.define(
       allowNull: true,
       defaultValue: [],
     },
+    patient_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    doctor_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    facility_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    document_date: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    structured_medications: {
+      // Array of { name, dosage, frequency, route } from AI extraction
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
     status: {
       type: DataTypes.STRING,
       allowNull: false,

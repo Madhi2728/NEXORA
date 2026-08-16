@@ -2,6 +2,7 @@ const path = require("path");
 const MedicalReport = require("../models/MedicalReport");
 const { recognizeText } = require("../utils/ocrEngine");
 const { extractFindings, detectMedicines } = require("../utils/reportAnalyzer");
+const { structureDocument } = require("../utils/documentStructurer");
 
 // POST /api/medical-reports  (patient only, multipart/form-data field "image")
 async function uploadReport(req, res) {
@@ -34,10 +35,16 @@ async function analyzeReport(report, absoluteFilePath) {
     const text = await recognizeText(absoluteFilePath);
     const findings = extractFindings(text);
     const medicines = detectMedicines(text);
+    const structured = await structureDocument(text);
 
     report.ocr_text = text.trim();
     report.findings = findings;
     report.detected_medicines = medicines;
+    report.patient_name = structured.patientName;
+    report.doctor_name = structured.doctorName;
+    report.facility_name = structured.facilityName;
+    report.document_date = structured.documentDate;
+    report.structured_medications = structured.medications;
     report.status = "done";
     await report.save();
   } catch (err) {

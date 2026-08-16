@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Mail, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AuthLayout from "../../components/common/AuthLayout";
 import PasswordInput from "../../components/common/PasswordInput";
 import RoleSelector from "../../components/common/RoleSelector";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 
 const ROLE_HOME = { admin: "/admin", doctor: "/doctor", patient: "/patient" };
 const ROLE_LABEL = { admin: "Admin", doctor: "Doctor", patient: "Patient" };
@@ -50,59 +54,57 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl shadow-black/20 border border-white/50 p-8 animate-fade-in">
-        <h1 className="text-2xl font-semibold text-slate-800 mb-1">Welcome back</h1>
-        <p className="text-slate-500 mb-6 text-sm">Sign in to your Nexora Health account</p>
+      <h3 className="text-2xl font-semibold text-foreground">Sign in</h3>
+      <p className="mt-2 text-sm text-muted-foreground">Welcome back to Nexora Health.</p>
 
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Select your role</label>
-          <RoleSelector value={selectedRole} onChange={setSelectedRole} />
+      <div className="mt-6 space-y-2">
+        <Label>Select your role</Label>
+        <RoleSelector value={selectedRole} onChange={setSelectedRole} />
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Registered email</Label>
+          <Input
+            id="email"
+            type="email"
+            required
+            placeholder="you@clinic.org"
+            className="h-11 bg-background/50"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <Link to="/forgot-password" className="text-xs font-medium text-accent hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+          <PasswordInput
+            id="password"
+            required
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-slate-700">Password</label>
-              <Link to="/forgot-password" className="text-xs text-violet-600 font-medium">
-                Forgot password?
-              </Link>
-            </div>
-            <PasswordInput
-              required
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
-          </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {notice && <p className="text-sm text-signal">{notice}</p>}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {notice && <p className="text-sm text-amber-600">{notice}</p>}
+        <Button type="submit" className="w-full" disabled={submitting}>
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+          Sign in
+        </Button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60 text-white rounded-lg py-2.5 font-semibold transition shadow-lg shadow-violet-600/20"
-          >
-            {submitting ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-
-        <p className="text-sm text-slate-500 mt-6 text-center">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-violet-600 font-medium">
-            Register
-          </Link>
-        </p>
-      </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Don't have an account?{" "}
+        <Link to="/register" className="font-medium text-primary hover:underline">
+          Register
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

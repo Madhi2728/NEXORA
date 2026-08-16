@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { forgotPasswordRequest } from "../../services/authService";
 import AuthLayout from "../../components/common/AuthLayout";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -26,57 +30,55 @@ export default function ForgotPassword() {
 
   return (
     <AuthLayout>
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl shadow-black/20 border border-white/50 p-8 animate-fade-in">
-        <h1 className="text-2xl font-semibold text-slate-800 mb-1">Forgot password</h1>
-        <p className="text-slate-500 mb-6 text-sm">
-          Enter your email and we'll send you a 6-digit code to reset your password.
-        </p>
+      <h3 className="text-2xl font-semibold text-foreground">Reset your password</h3>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Enter your email and we'll send you a 6-digit code to reset your password.
+      </p>
 
-        {sent ? (
-          <div className="space-y-4">
-            <p className="text-sm text-violet-700 bg-violet-50 rounded-lg p-3">
-              If an account with that email exists, a reset code has been sent. Check your
-              inbox (and spam folder).
-            </p>
-            <button
-              onClick={() => navigate(`/reset-password?email=${encodeURIComponent(email)}`)}
-              className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-lg py-2 font-medium transition"
-            >
-              I have my code
-            </button>
+      {sent ? (
+        <div className="mt-7 space-y-4">
+          <p className="flex items-start gap-2 rounded-xl bg-accent/10 p-3 text-sm text-accent">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+            If an account with that email exists, a reset code has been sent. Check your inbox
+            (and spam folder).
+          </p>
+          <Button
+            className="w-full"
+            onClick={() => navigate(`/reset-password?email=${encodeURIComponent(email)}`)}
+          >
+            I have my code
+          </Button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Registered email</Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              placeholder="you@clinic.org"
+              className="h-11 bg-background/50"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                required
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60 text-white rounded-lg py-2.5 font-semibold transition shadow-lg shadow-violet-600/20"
-            >
-              {submitting ? "Sending..." : "Send reset code"}
-            </button>
-          </form>
-        )}
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            Email me a reset code
+          </Button>
+        </form>
+      )}
 
-        <p className="text-sm text-slate-500 mt-6 text-center">
-          Remembered your password?{" "}
-          <Link to="/login" className="text-violet-600 font-medium">
-            Sign in
-          </Link>
-        </p>
-      </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Remembered your password?{" "}
+        <Link to="/login" className="font-medium text-primary hover:underline">
+          Sign in
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

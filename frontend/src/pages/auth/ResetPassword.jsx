@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { resetPasswordRequest } from "../../services/authService";
 import AuthLayout from "../../components/common/AuthLayout";
 import PasswordInput from "../../components/common/PasswordInput";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "../../components/ui/input-otp";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -34,71 +39,70 @@ export default function ResetPassword() {
 
   return (
     <AuthLayout>
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl shadow-black/20 border border-white/50 p-8 animate-fade-in">
-        <h1 className="text-2xl font-semibold text-slate-800 mb-1">Reset password</h1>
-        <p className="text-slate-500 mb-6 text-sm">
-          Enter the 6-digit code we emailed you, along with your new password.
-        </p>
+      <h3 className="text-2xl font-semibold text-foreground">Set a new password</h3>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Enter the 6-digit code we emailed you, along with your new password.
+      </p>
 
-        {done ? (
-          <p className="text-sm text-violet-700 bg-violet-50 rounded-lg p-3">
-            Password updated! Redirecting you to sign in...
-          </p>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                required
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                6-digit code
-              </label>
-              <input
-                required
+      {done ? (
+        <p className="mt-7 flex items-start gap-2 rounded-xl bg-accent/10 p-3 text-sm text-accent">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+          Password updated! Redirecting you to sign in...
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              className="h-11 bg-background/50"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>6-digit code</Label>
+            <div className="flex justify-center">
+              <InputOTP
                 maxLength={6}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 tracking-widest text-center font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500"
                 value={form.otp}
-                onChange={(e) => setForm({ ...form, otp: e.target.value.replace(/\D/g, "") })}
-                placeholder="000000"
-              />
+                onChange={(otp) => setForm({ ...form, otp: otp.replace(/\D/g, "") })}
+              >
+                <InputOTPGroup>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot key={i} index={i} />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                New password
-              </label>
-              <PasswordInput
-                required
-                minLength={6}
-                value={form.newPassword}
-                onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-              />
-            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New password</Label>
+            <PasswordInput
+              id="new-password"
+              required
+              minLength={6}
+              value={form.newPassword}
+              onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
+            />
+          </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60 text-white rounded-lg py-2.5 font-semibold transition shadow-lg shadow-violet-600/20"
-            >
-              {submitting ? "Resetting..." : "Reset password"}
-            </button>
-          </form>
-        )}
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+            Reset password
+          </Button>
+        </form>
+      )}
 
-        <p className="text-sm text-slate-500 mt-6 text-center">
-          <Link to="/login" className="text-violet-600 font-medium">
-            Back to sign in
-          </Link>
-        </p>
-      </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        <Link to="/login" className="font-medium text-primary hover:underline">
+          Back to sign in
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

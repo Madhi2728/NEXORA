@@ -2,6 +2,7 @@ const path = require("path");
 const Prescription = require("../models/Prescription");
 const { recognizeText } = require("../utils/ocrEngine");
 const { detectMedicines } = require("../utils/reportAnalyzer");
+const { structureDocument } = require("../utils/documentStructurer");
 
 // POST /api/prescriptions  (patient only, multipart/form-data field "image")
 async function uploadPrescription(req, res) {
@@ -33,9 +34,15 @@ async function runOcr(prescription, absoluteFilePath) {
   try {
     const text = await recognizeText(absoluteFilePath);
     const medicines = detectMedicines(text);
+    const structured = await structureDocument(text);
 
     prescription.ocr_text = text.trim();
     prescription.detected_medicines = medicines;
+    prescription.patient_name = structured.patientName;
+    prescription.doctor_name = structured.doctorName;
+    prescription.facility_name = structured.facilityName;
+    prescription.document_date = structured.documentDate;
+    prescription.structured_medications = structured.medications;
     prescription.status = "done";
     await prescription.save();
   } catch (err) {

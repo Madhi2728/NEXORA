@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -72,4 +72,108 @@ h3,
   background-size: 40px 40px;
   -webkit-mask-image: radial-gradient(circle 220px at var(--gx, 50%) var(--gy, 50%), black 0%, transparent 100%);
   mask-image: radial-gradient(circle 220px at var(--gx, 50%) var(--gy, 50%), black 0%, transparent 100%);
+}
+
+/* ---------------------------------------------------------------------
+ * Nexora auth theme (ported from the Lovable design for the login /
+ * register / forgot-password / reset-password pages only). Scoped by
+ * usage, not by selector — nothing here touches `body`/`html`, so the
+ * rest of the app keeps its existing look.
+ *
+ * Tokens below are stored as bare oklch channels (no alpha) so
+ * tailwind.config.js can apply opacity modifiers via the <alpha-value>
+ * placeholder (e.g. bg-primary/15). Tokens consumed directly via
+ * var()/color-mix() (in AmbientBackground and the utility classes below)
+ * have a `-color` twin holding the full oklch() value instead, since
+ * Tailwind's placeholder trick and direct CSS var() consumption need
+ * different value shapes for the same color.
+ * --------------------------------------------------------------------- */
+
+:root {
+  --background: 0.16 0.035 296;
+  --foreground: 0.96 0.01 300;
+  --card: 0.22 0.042 296;
+  --card-foreground: 0.96 0.01 300;
+  --popover: 0.2 0.04 296;
+  --popover-foreground: 0.96 0.01 300;
+  --primary: 0.66 0.19 300;
+  --primary-foreground: 0.16 0.03 296;
+  --secondary: 0.28 0.05 297;
+  --secondary-foreground: 0.94 0.015 300;
+  --muted: 0.26 0.04 297;
+  --muted-foreground: 0.74 0.03 300;
+  --accent: 0.8 0.13 190;
+  --accent-foreground: 0.17 0.03 296;
+  --destructive: 0.62 0.22 20;
+  --destructive-foreground: 0.97 0.01 300;
+  --border: 0.34 0.05 298;
+  --input: 0.3 0.05 298 / 70%;
+  --ring: 0.7 0.17 300;
+  --amethyst: 0.6 0.2 303;
+  --lavender: 0.82 0.09 300;
+  --vitality: 0.82 0.15 178;
+  --signal: 0.85 0.16 92;
+
+  /* Full-color twins for direct var()/color-mix() consumers. */
+  --surface-color: oklch(0.21 0.04 296);
+  --border-color: oklch(0.34 0.05 298 / 60%);
+  --primary-color: oklch(0.66 0.19 300);
+  --amethyst-color: oklch(0.6 0.2 303);
+  --vitality-color: oklch(0.82 0.15 178);
+  --lavender-color: oklch(0.82 0.09 300);
+
+  --gradient-amethyst: linear-gradient(135deg, oklch(0.66 0.19 300), oklch(0.78 0.13 268));
+  --gradient-vital: linear-gradient(135deg, oklch(0.66 0.19 300), oklch(0.82 0.15 178));
+  --glow-primary: 0 0 0 1px oklch(0.66 0.19 300 / 25%), 0 22px 60px -20px oklch(0.66 0.19 300 / 55%);
+  --glow-soft: 0 18px 50px -24px oklch(0.6 0.2 303 / 60%);
+}
+
+.font-nexora-sans {
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+.glass-panel {
+  background: color-mix(in oklab, var(--surface-color) 72%, transparent);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--glow-soft);
+}
+
+.text-gradient {
+  background: var(--gradient-vital);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glow-ring {
+  box-shadow: var(--glow-primary);
+}
+
+@keyframes nexora-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -26px, 0) rotate(8deg);
+  }
+}
+
+@keyframes nexora-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.float-slow {
+  animation: nexora-float 12s ease-in-out infinite;
+}
+
+.pulse-soft {
+  animation: nexora-pulse 6s ease-in-out infinite;
 }
