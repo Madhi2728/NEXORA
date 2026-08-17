@@ -2,9 +2,9 @@ import { useCallback, useRef, useState } from "react";
 import { HeartPulse } from "lucide-react";
 
 const SCROLL_SPEED = 60; // px/sec — pace of the continuous baseline sweep
-const GAP_SPACING = 180; // px between brief gaps == 3s of travel at SCROLL_SPEED
+const GAP_SPACING = 300; // px between brief gaps == 5s of travel at SCROLL_SPEED
 const GAP_LENGTH = 8; // px — how wide each brief gap is
-const TILE_WIDTH = GAP_SPACING * 3; // 540px; a multiple of GAP_SPACING so the loop is seamless
+const TILE_WIDTH = GAP_SPACING * 3; // 900px; a multiple of GAP_SPACING so the loop is seamless
 
 const SPIKE_WIDTH = 90;
 // Stylized P-QRS-T trace: gentle rise (P), sharp down-up (QRS), settle (T).

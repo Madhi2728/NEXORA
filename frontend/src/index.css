@@ -200,23 +200,23 @@ h3,
 }
 
 /* Continuous baseline scroll (always running, independent of clicks). Two
-   540px tiles are placed side by side and shifted left by exactly one tile
-   width per loop, so the seam is invisible. 540px is a multiple of the
-   180px gap-spacing (see GAP_SPACING in EcgPulse.jsx), so each tile's dash
+   900px tiles are placed side by side and shifted left by exactly one tile
+   width per loop, so the seam is invisible. 900px is a multiple of the
+   300px gap-spacing (see GAP_SPACING in EcgPulse.jsx), so each tile's dash
    pattern ends on a clean period boundary and lines up with the next tile's
-   — keep -540px/9s in sync with TILE_WIDTH/SCROLL_SPEED there if either
+   — keep -900px/15s in sync with TILE_WIDTH/SCROLL_SPEED there if either
    changes. */
 @keyframes ecg-baseline-scroll {
   from {
     transform: translateX(0);
   }
   to {
-    transform: translateX(-540px);
+    transform: translateX(-900px);
   }
 }
 
 .ecg-baseline-scroll {
-  animation: ecg-baseline-scroll 9s linear infinite;
+  animation: ecg-baseline-scroll 15s linear infinite;
 }
 
 .ecg-baseline-glow {
