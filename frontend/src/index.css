@@ -177,3 +177,79 @@ h3,
 .pulse-soft {
   animation: nexora-pulse 6s ease-in-out infinite;
 }
+
+/* One-shot heartbeat, triggered on click by EcgPulse (not on hover). */
+@keyframes ecg-heart-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.35);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+}
+
+.ecg-heart-beat {
+  animation: ecg-heart-beat 0.7s ease-in-out;
+}
+
+/* Continuous baseline scroll (always running, independent of clicks). Two
+   540px tiles are placed side by side and shifted left by exactly one tile
+   width per loop, so the seam is invisible. 540px is a multiple of the
+   180px gap-spacing (see GAP_SPACING in EcgPulse.jsx), so each tile's dash
+   pattern ends on a clean period boundary and lines up with the next tile's
+   — keep -540px/9s in sync with TILE_WIDTH/SCROLL_SPEED there if either
+   changes. */
+@keyframes ecg-baseline-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-540px);
+  }
+}
+
+.ecg-baseline-scroll {
+  animation: ecg-baseline-scroll 9s linear infinite;
+}
+
+.ecg-baseline-glow {
+  filter: drop-shadow(0 0 2px var(--primary-color)) drop-shadow(0 0 5px var(--vitality-color));
+}
+
+/* One-shot heartbeat spike, drawn in place at the clicked x via a
+   pathLength-normalized stroke reveal (dashoffset 1 -> 0), held briefly,
+   then faded out so it "flattens" back into the idle baseline. */
+@keyframes ecg-spike-play {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.ecg-spike-play {
+  stroke-dasharray: 1;
+  animation: ecg-spike-play 0.9s ease-out forwards;
+}
+
+.ecg-spike-glow {
+  filter: drop-shadow(0 0 4px var(--primary-color)) drop-shadow(0 0 8px var(--vitality-color));
+}

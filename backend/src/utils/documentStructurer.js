@@ -18,15 +18,23 @@ Return ONLY valid JSON, no markdown fences, no explanation, matching exactly thi
   "doctorName": string or null,
   "facilityName": string or null,
   "documentDate": string or null,
+  "vitals": {
+    "bloodPressure": string or null,
+    "temperature": string or null,
+    "pulse": string or null,
+    "respiratoryRate": string or null
+  },
   "medications": [
     { "name": string, "dosage": string or null, "frequency": string or null, "route": string or null }
   ]
 }
 Rules:
-- If a field isn't present in the text, use null (or [] for medications).
+- If a field isn't present in the text, use null (or [] for medications, or null for each vitals field).
 - "dosage" is quantity/strength (e.g. "15 ml", "25 mg").
 - "frequency" is how often/when to take it (e.g. "tid a.c.", "daily").
 - "route" is how it's taken if stated (e.g. "oral", "topical"), else null.
+- "bloodPressure" should include the unit if given (e.g. "140/90 mmHg").
+- "temperature", "pulse", and "respiratoryRate" should include their units if given (e.g. "36.8 C", "76 bpm", "16/min").
 - Keep names as close to the original OCR text as possible; do not invent data.`;
 
 function safeParseJson(text) {
