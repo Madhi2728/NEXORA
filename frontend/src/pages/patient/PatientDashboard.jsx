@@ -72,6 +72,7 @@ export default function PatientDashboard() {
             title="Medicine Info Lookup"
             accent="from-amber-500 to-orange-500"
             iconBg="bg-amber-900/40 text-amber-300"
+            fullHeight
           >
             <MedicineInfoLookup />
           </SectionCard>

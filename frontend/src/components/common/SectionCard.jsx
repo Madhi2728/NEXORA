@@ -2,9 +2,14 @@
 //
 // Reusable card wrapper used by every dashboard section (Health Dashboard,
 // AI Health Intelligence, Prescription OCR, Medicine Info Lookup, Medical
-// Report Analysis). When `fullHeight` is set, the card fills its grid cell
-// and its content area scrolls independently — the header (icon + title)
-// stays fixed, only the body below it scrolls.
+// Report Analysis). When `fullHeight` is set, the card gets a fixed height
+// (not just h-full — the grid row it sits in has no definite height of its
+// own, so h-full alone has nothing to fill, and the row would otherwise
+// silently size itself to whichever sibling's content happens to be
+// tallest) and its content area scrolls independently — the header (icon +
+// title) stays fixed, only the body below it scrolls.
+
+const FULL_HEIGHT = "h-[34rem]"; // 544px — shared by every fullHeight section, so paired cards match
 
 export default function SectionCard({
   icon: Icon,
@@ -18,7 +23,7 @@ export default function SectionCard({
   return (
     <div
       className={`rounded-2xl shadow-sm border border-slate-700 bg-slate-800 overflow-hidden ${
-        fullHeight ? "h-full flex flex-col" : ""
+        fullHeight ? `${FULL_HEIGHT} flex flex-col` : ""
       }`}
     >
       {/* Top accent bar */}

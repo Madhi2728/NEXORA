@@ -63,8 +63,9 @@ export default function MedicineInfoLookup() {
   const Icon = style.icon;
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
+    <div className="flex flex-col h-full min-h-0">
+      {/* Search bar — stays fixed, never scrolls */}
+      <div className="relative flex-shrink-0">
         <div className="flex gap-2">
           <input
             value={query}
@@ -100,56 +101,59 @@ export default function MedicineInfoLookup() {
         )}
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {/* Results — this is the ONLY part that scrolls */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 mt-4 space-y-4">
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
-      {loading && <p className="text-sm text-slate-500 text-center">Looking up...</p>}
+        {loading && <p className="text-sm text-slate-500 text-center">Looking up...</p>}
 
-      {result && !loading && (
-        <div className="bg-slate-900/40 rounded-xl border border-slate-700 p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${style.cls}`}>
-              <Icon size={24} />
+        {result && !loading && (
+          <div className="bg-slate-900/40 rounded-xl border border-slate-700 p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${style.cls}`}>
+                <Icon size={24} />
+              </div>
+              <div>
+                <p className="font-semibold text-slate-100">
+                  {result.brandName || result.genericName || query}
+                </p>
+                {result.genericName && result.brandName && (
+                  <p className="text-xs text-slate-500">Generic: {result.genericName}</p>
+                )}
+              </div>
             </div>
-            <div>
-              <p className="font-semibold text-slate-100">
-                {result.brandName || result.genericName || query}
-              </p>
-              {result.genericName && result.brandName && (
-                <p className="text-xs text-slate-500">Generic: {result.genericName}</p>
-              )}
-            </div>
+
+            {notFoundMsg ? (
+              <div className="text-sm text-amber-300 bg-amber-900/30 border border-amber-800 rounded-lg p-3">
+                {notFoundMsg}
+                {result.commonUse && (
+                  <p className="mt-1 text-slate-300">Known use: {result.commonUse}</p>
+                )}
+              </div>
+            ) : (
+              <>
+                {result.limitedInfo && (
+                  <div className="text-xs text-sky-300 bg-sky-900/30 border border-sky-800 rounded-lg p-2">
+                    Not in the FDA database (likely not US-marketed) — showing a general
+                    description from Wikipedia instead. Dosage and warnings aren't available from
+                    this source; check the package insert or ask a pharmacist.
+                  </div>
+                )}
+                <ExpandableText label="Purpose / Indications" text={result.purpose} />
+                <ExpandableText label="Dosage" text={result.dosage} />
+                <ExpandableText label="Warnings" text={result.warnings} />
+                <p className="text-xs text-slate-500 pt-1">Source: {result.source}</p>
+              </>
+            )}
           </div>
+        )}
 
-          {notFoundMsg ? (
-            <div className="text-sm text-amber-300 bg-amber-900/30 border border-amber-800 rounded-lg p-3">
-              {notFoundMsg}
-              {result.commonUse && (
-                <p className="mt-1 text-slate-300">Known use: {result.commonUse}</p>
-              )}
-            </div>
-          ) : (
-            <>
-              {result.limitedInfo && (
-                <div className="text-xs text-sky-300 bg-sky-900/30 border border-sky-800 rounded-lg p-2">
-                  Not in the FDA database (likely not US-marketed) — showing a general
-                  description from Wikipedia instead. Dosage and warnings aren't available from
-                  this source; check the package insert or ask a pharmacist.
-                </div>
-              )}
-              <ExpandableText label="Purpose / Indications" text={result.purpose} />
-              <ExpandableText label="Dosage" text={result.dosage} />
-              <ExpandableText label="Warnings" text={result.warnings} />
-              <p className="text-xs text-slate-500 pt-1">Source: {result.source}</p>
-            </>
-          )}
-        </div>
-      )}
-
-      <p className="text-xs text-slate-500">
-        Descriptions come from the U.S. FDA's public database (openFDA) and only cover
-        FDA-approved products — India-only brands may not appear. This is informational only,
-        not a substitute for a pharmacist or doctor.
-      </p>
+        <p className="text-xs text-slate-500">
+          Descriptions come from the U.S. FDA's public database (openFDA) and only cover
+          FDA-approved products — India-only brands may not appear. This is informational only,
+          not a substitute for a pharmacist or doctor.
+        </p>
+      </div>
     </div>
   );
 }
