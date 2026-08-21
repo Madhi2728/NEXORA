@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { sendMessage, getHistory, clearHistory } from "../../services/chatService";
-import { Send, Loader2, Trash2, AlertTriangle, Bot, User, HeartPulse, History, X } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  Trash2,
+  AlertTriangle,
+  Bot,
+  User,
+  HeartPulse,
+  History,
+  X,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 export default function MedicalChatbot() {
   const [messages, setMessages] = useState([]); // current live session only
@@ -10,7 +24,15 @@ export default function MedicalChatbot() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+
+  // --- Voice assistant state ---
+  const [isListening, setIsListening] = useState(false);
+  const [supportsVoice, setSupportsVoice] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false); // auto-read assistant replies aloud
+
   const bottomRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const handleSendRef = useRef(); // always points at the latest handleSend closure
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -30,9 +52,9 @@ export default function MedicalChatbot() {
     if (next) loadHistory();
   }
 
-  async function handleSend(e) {
-    e.preventDefault();
-    const text = input.trim();
+  async function handleSend(e, voiceText) {
+    if (e) e.preventDefault();
+    const text = (voiceText ?? input).trim();
     if (!text || sending) return;
 
     setError("");
@@ -47,6 +69,7 @@ export default function MedicalChatbot() {
         { role: "assistant", content: reply, crisis, id: `temp-${Date.now()}-r` },
       ]);
       if (showHistory) loadHistory(); // keep the side panel in sync if it's open
+      if (voiceEnabled) speak(reply);
     } catch (err) {
       setError(err.response?.data?.message || "Could not reach the assistant. Please try again.");
     } finally {
@@ -54,15 +77,118 @@ export default function MedicalChatbot() {
     }
   }
 
+  // keep the ref fresh so speech recognition always calls the latest handleSend
+  useEffect(() => {
+    handleSendRef.current = handleSend;
+  });
+
   async function handleClear() {
+    stopSpeaking();
     await clearHistory();
     setMessages([]);
     setHistory([]);
   }
 
+  // --- Voice: speech-to-text setup (runs once) ---
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSupportsVoice(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event) => {
+      let interim = "";
+      let final = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      if (final.trim()) {
+        setInput("");
+        setIsListening(false);
+        handleSendRef.current?.(null, final);
+      } else {
+        setInput(interim);
+      }
+    };
+
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    setSupportsVoice(true);
+
+    return () => {
+      recognition.stop();
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  function toggleListening() {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+      return;
+    }
+
+    stopSpeaking();
+    setError("");
+    setInput("");
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      // ignore "already started" errors from rapid double-clicks
+    }
+  }
+
+  // --- Voice: text-to-speech ---
+  function speak(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function stopSpeaking() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+
+  function toggleVoiceEnabled() {
+    setVoiceEnabled((prev) => {
+      if (prev) stopSpeaking();
+      return !prev;
+    });
+  }
+
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="flex justify-end items-center gap-3 mb-2">
+        <button
+          onClick={toggleVoiceEnabled}
+          title={voiceEnabled ? "Voice replies: On" : "Voice replies: Off"}
+          className={`text-xs flex items-center gap-1 ${
+            voiceEnabled ? "text-violet-300" : "text-slate-500 hover:text-violet-300"
+          }`}
+        >
+          {voiceEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />} Voice
+        </button>
         <button
           onClick={toggleHistory}
           className={`text-xs flex items-center gap-1 ${
@@ -81,7 +207,7 @@ export default function MedicalChatbot() {
         )}
       </div>
 
-      <div className="relative bg-slate-900/40 rounded-xl border border-slate-700 flex flex-1 min-h-0 overflow-hidden">
+      <div className="relative bg-slate-900/40 rounded-xl border border-slate-700 flex flex-1 min-h-0">
         {/* Main live conversation */}
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
@@ -138,21 +264,42 @@ export default function MedicalChatbot() {
           </div>
 
           <form onSubmit={handleSend} className="border-t border-slate-700 p-2.5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white flex items-center justify-center flex-shrink-0 animate-bounce">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white flex items-center justify-center flex-shrink-0">
               <HeartPulse size={14} />
             </div>
+
+            <button
+              type="button"
+              onClick={toggleListening}
+              disabled={!supportsVoice}
+              title={
+                !supportsVoice
+                  ? "Voice input not supported in this browser"
+                  : isListening
+                  ? "Stop listening"
+                  : "Speak your question"
+              }
+              className={`w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-colors ${
+                isListening
+                  ? "bg-red-600 text-white animate-pulse"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+              } disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              {isListening ? <MicOff size={15} /> : <Mic size={15} />}
+            </button>
+
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a health question..."
-              className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              placeholder={isListening ? "Listening..." : "Type a health question..."}
+              className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 placeholder-slate-500 text-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500"
             />
             <button
               type="submit"
               disabled={sending || !input.trim()}
-              className="bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-lg px-3 py-1.5"
+              className="bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-lg w-9 h-9 flex-shrink-0 flex items-center justify-center"
             >
-              <Send size={16} />
+              <Send size={15} />
             </button>
           </form>
         </div>
