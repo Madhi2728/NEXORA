@@ -6,16 +6,16 @@ function getInitialTheme() {
   if (typeof window === "undefined") return "dark";
   const stored = localStorage.getItem("nexora-theme");
   if (stored === "light" || stored === "dark") return stored;
-  // Fall back to the user's OS preference on first visit.
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  return "dark"; // your app's default look
 }
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
+    // styles.css defines dark as the base :root theme, with a ".light"
+    // override block for light mode -- so we only ever toggle "light".
+    document.documentElement.classList.toggle("light", theme === "light");
     localStorage.setItem("nexora-theme", theme);
   }, [theme]);
 
