@@ -254,29 +254,28 @@ export default function DoctorDashboard() {
 
           {/*
             Row: Patient Queue (2/3) + Critical Alerts (1/3).
-            `grid ... items-stretch` + `fullHeight` on both SectionCards keeps
-            the pair exactly the same height regardless of content length (see
-            SectionCard's FULL_HEIGHT note). Critical Alerts usually has fewer
-            rows than the queue — rather than stretch the alert rows to fill the
-            gap, we let the list keep its natural size and drop a quiet
-            empty-state into the leftover space at the bottom.
+            Both are DIRECT grid children (no wrapper div) so `items-stretch`
+            plus `fullHeight` (shared FULL_HEIGHT on SectionCard) makes the pair
+            exactly the same height regardless of content length. Critical
+            Alerts usually has fewer rows than the queue — rather than stretch
+            the alert rows to fill the gap, the list keeps its natural size and
+            a subtle empty-state panel fills the leftover space intentionally.
           */}
           <div className="grid lg:grid-cols-3 gap-6 items-stretch">
-            <div className="lg:col-span-2">
-              <SectionCard
-                icon={Users}
-                title="Today's Patient Queue"
-                accent="from-sky-500 to-blue-500"
-                iconBg="bg-sky-900/40 text-sky-300"
-                fullHeight
-              >
-                <div>
-                  {APPOINTMENTS_TODAY.map((appt) => (
-                    <AppointmentRow key={appt.id} appt={appt} />
-                  ))}
-                </div>
-              </SectionCard>
-            </div>
+            <SectionCard
+              className="lg:col-span-2"
+              icon={Users}
+              title="Today's Patient Queue"
+              accent="from-sky-500 to-blue-500"
+              iconBg="bg-sky-900/40 text-sky-300"
+              fullHeight
+            >
+              <div>
+                {APPOINTMENTS_TODAY.map((appt) => (
+                  <AppointmentRow key={appt.id} appt={appt} />
+                ))}
+              </div>
+            </SectionCard>
 
             <SectionCard
               icon={AlertTriangle}
@@ -286,14 +285,15 @@ export default function DoctorDashboard() {
               fullHeight
             >
               <div className="flex flex-1 flex-col">
-                <div>
+                <div className="flex-shrink-0">
                   {CRITICAL_ALERTS.map((alert) => (
                     <AlertRow key={alert.id} alert={alert} />
                   ))}
                 </div>
-                <div className="mt-auto flex flex-col items-center justify-center gap-1.5 py-8 text-center">
+                <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700/70 px-4 py-6 text-center min-h-[6rem]">
                   <ShieldCheck className="h-5 w-5 text-slate-600" />
-                  <p className="text-xs text-slate-600">No further alerts</p>
+                  <p className="text-xs text-slate-500">No further alerts</p>
+                  <p className="text-[11px] text-slate-600">You're all caught up</p>
                 </div>
               </div>
             </SectionCard>

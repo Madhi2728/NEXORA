@@ -18,13 +18,14 @@ export default function SectionCard({
   iconBg = "bg-violet-900/40 text-violet-300",
   fullHeight = false,
   headerExtra,
+  className = "",
   children,
 }) {
   return (
     <div
       className={`rounded-2xl shadow-sm border border-slate-700 bg-slate-800 overflow-hidden ${
         fullHeight ? `${FULL_HEIGHT} flex flex-col` : ""
-      }`}
+      } ${className}`}
     >
       {/* Top accent bar */}
       <div className={`h-1.5 rounded-t-2xl bg-gradient-to-r ${accent}`} />
