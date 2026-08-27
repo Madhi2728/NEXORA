@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import SectionCard from "../../components/common/SectionCard";
 import NotificationBell from "../../components/common/NotificationBell";
+import PrescriptionNotebook from "../../components/doctor/PrescriptionNotebook";
 import { ThemeProvider } from "../../context/ThemeContext";
 import ThemeToggle from "../../components/ThemeToggle";
 import {
@@ -16,6 +18,7 @@ import {
   Clock,
   Pill,
   FolderOpen,
+  ShieldCheck,
 } from "lucide-react";
 
 /**
@@ -205,8 +208,20 @@ function QuickActionButton({ icon: Icon, label, onClick }) {
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
+  const [notebookOpen, setNotebookOpen] = useState(false);
 
   const maxLoad = Math.max(...PATIENT_LOAD.map((d) => d.count));
+
+  // The "active" patient the Prescription Notebook writes for: whoever the
+  // doctor is currently seeing, else the next one waiting, else the first slot.
+  // TODO: replace with a real selection once the queue is interactive.
+  const activeAppt =
+    APPOINTMENTS_TODAY.find((a) => a.status === "in-progress") ||
+    APPOINTMENTS_TODAY.find((a) => a.status === "waiting") ||
+    APPOINTMENTS_TODAY[0];
+  const activePatient = activeAppt
+    ? { name: activeAppt.patient, age: activeAppt.age, sex: activeAppt.sex }
+    : null;
 
   return (
     <ThemeProvider>
@@ -237,7 +252,15 @@ export default function DoctorDashboard() {
             ))}
           </div>
 
-          {/* Row: Patient Queue (2/3) + Critical Alerts (1/3) */}
+          {/*
+            Row: Patient Queue (2/3) + Critical Alerts (1/3).
+            `grid ... items-stretch` + `fullHeight` on both SectionCards keeps
+            the pair exactly the same height regardless of content length (see
+            SectionCard's FULL_HEIGHT note). Critical Alerts usually has fewer
+            rows than the queue — rather than stretch the alert rows to fill the
+            gap, we let the list keep its natural size and drop a quiet
+            empty-state into the leftover space at the bottom.
+          */}
           <div className="grid lg:grid-cols-3 gap-6 items-stretch">
             <div className="lg:col-span-2">
               <SectionCard
@@ -262,10 +285,16 @@ export default function DoctorDashboard() {
               iconBg="bg-rose-900/40 text-rose-300"
               fullHeight
             >
-              <div>
-                {CRITICAL_ALERTS.map((alert) => (
-                  <AlertRow key={alert.id} alert={alert} />
-                ))}
+              <div className="flex flex-1 flex-col">
+                <div>
+                  {CRITICAL_ALERTS.map((alert) => (
+                    <AlertRow key={alert.id} alert={alert} />
+                  ))}
+                </div>
+                <div className="mt-auto flex flex-col items-center justify-center gap-1.5 py-8 text-center">
+                  <ShieldCheck className="h-5 w-5 text-slate-600" />
+                  <p className="text-xs text-slate-600">No further alerts</p>
+                </div>
               </div>
             </SectionCard>
           </div>
@@ -294,8 +323,12 @@ export default function DoctorDashboard() {
               fullHeight
             >
               <div className="space-y-2">
+                <QuickActionButton
+                  icon={Pill}
+                  label="Write Prescription"
+                  onClick={() => setNotebookOpen(true)}
+                />
                 {/* TODO: wire these to real navigation / modals */}
-                <QuickActionButton icon={Pill} label="Write Prescription" onClick={() => {}} />
                 <QuickActionButton icon={FileText} label="View Patient Record" onClick={() => {}} />
                 <QuickActionButton icon={MessageSquare} label="Message Patient" onClick={() => {}} />
               </div>
@@ -350,6 +383,18 @@ export default function DoctorDashboard() {
             </SectionCard>
           </div>
         </div>
+
+        {notebookOpen && (
+          <PrescriptionNotebook
+            patient={activePatient}
+            doctorName={user?.name}
+            onClose={() => setNotebookOpen(false)}
+            // TODO: swap for a real POST once /api/prescriptions/written exists.
+            onSave={async (prescription) => {
+              console.log("Prescription saved (stub):", prescription);
+            }}
+          />
+        )}
       </div>
     </ThemeProvider>
   );
