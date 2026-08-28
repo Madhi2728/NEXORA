@@ -16,6 +16,7 @@ const DoctorProfile = require("../src/models/DoctorProfile");
 const Appointment = require("../src/models/Appointment");
 const Prescription = require("../src/models/Prescription");
 const MedicalReport = require("../src/models/MedicalReport");
+const Message = require("../src/models/Message");
 
 const PASSWORD = "demo1234";
 
@@ -239,9 +240,11 @@ async function seed() {
   let patientCount = 0;
   let rxCount = 0;
   let reportCount = 0;
+  const patientsByEmail = {};
 
   for (const p of PATIENTS) {
     const patient = await findOrCreateUser(p.name, p.email, "patient");
+    patientsByEmail[p.email] = patient;
     patientCount += 1;
 
     await PatientProfile.upsert({ patient_id: patient.id, ...p.profile });
@@ -305,9 +308,58 @@ async function seed() {
     }
   }
 
+  // --- a couple of reports still awaiting review (Pending Reports card) ---
+  let pendingCount = 0;
+  if (!(await MedicalReport.count({ where: { status: "pending" } }))) {
+    await MedicalReport.bulkCreate([
+      {
+        patient_id: patientsByEmail["priya@nexora.health"].id,
+        file_path: "reports/pending-cbc.jpg",
+        original_filename: "cbc_panel_scan.jpg",
+        status: "pending",
+        patient_name: "Priya Menon",
+        document_date: TODAY,
+      },
+      {
+        patient_id: patientsByEmail["rahul@nexora.health"].id,
+        file_path: "reports/pending-lipids.jpg",
+        original_filename: "lipid_profile_scan.jpg",
+        status: "pending",
+        patient_name: "Rahul Iyer",
+        document_date: TODAY,
+      },
+    ]);
+    pendingCount = 2;
+  }
+
+  // --- a couple of unread patient -> doctor messages (Unread Messages card) ---
+  let msgCount = 0;
+  if (!(await Message.count({ where: { receiver_id: doctor.id } }))) {
+    await Message.bulkCreate([
+      {
+        sender_id: patientsByEmail["ananya@nexora.health"].id,
+        sender_role: "patient",
+        receiver_id: doctor.id,
+        receiver_role: "doctor",
+        subject: "BP still a little high",
+        body: "Morning readings around 140/90 this week even on the Amlodipine. Should I be worried?",
+      },
+      {
+        sender_id: patientsByEmail["rahul@nexora.health"].id,
+        sender_role: "patient",
+        receiver_id: doctor.id,
+        receiver_role: "doctor",
+        subject: "HbA1c result",
+        body: "Saw the 9.4% — quite concerned. Can we go over next steps at my appointment?",
+      },
+    ]);
+    msgCount = 2;
+  }
+
   console.log(
     `Seeded demo doctor (${DOCTOR.email}) + ${patientCount} patients, ` +
-      `${rxCount} written prescriptions, ${reportCount} lab reports.`
+      `${rxCount} written prescriptions, ${reportCount} lab reports, ` +
+      `${pendingCount} pending reports, ${msgCount} patient messages.`
   );
   console.log(`All demo logins use password: ${PASSWORD}`);
   console.log(`Patients: ${PATIENTS.map((p) => p.email).join(", ")}`);
