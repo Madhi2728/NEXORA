@@ -1,5 +1,6 @@
 const path = require("path");
 const Prescription = require("../models/Prescription");
+const User = require("../models/User");
 const { recognizeText } = require("../utils/ocrEngine");
 const { detectMedicines } = require("../utils/reportAnalyzer");
 const { structureDocument } = require("../utils/documentStructurer");
@@ -99,6 +100,55 @@ async function getPrescriptionsForPatient(req, res) {
   }
 }
 
+// POST /api/prescriptions/written  (doctor/admin)
+// Persists a prescription typed in the Prescription Notebook — no file upload,
+// no OCR. Stored in the same `prescriptions` table with source === "written".
+async function createWrittenPrescription(req, res) {
+  try {
+    const { patient_id, prescribed_date, medicines, notes } = req.body;
+
+    if (!patient_id) {
+      return res.status(400).json({ message: "A patient is required." });
+    }
+    const cleanMeds = (Array.isArray(medicines) ? medicines : [])
+      .map((m) => ({
+        name: (m.name || "").trim(),
+        dosage: (m.dosage || "").trim(),
+        frequency: (m.frequency || "").trim(),
+        duration: (m.duration || "").trim(),
+      }))
+      .filter((m) => m.name);
+
+    if (!cleanMeds.length) {
+      return res
+        .status(400)
+        .json({ message: "Add at least one medicine (with a drug name)." });
+    }
+
+    const patient = await User.findOne({ where: { id: patient_id, role: "patient" } });
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found." });
+    }
+
+    const prescription = await Prescription.create({
+      patient_id,
+      doctor_user_id: req.user.id,
+      source: "written",
+      status: "done",
+      file_path: null,
+      written_medications: cleanMeds,
+      prescribed_date: prescribed_date || null,
+      patient_name: patient.name,
+      notes: notes?.trim() || null,
+    });
+
+    return res.status(201).json({ prescription });
+  } catch (err) {
+    console.error("createWrittenPrescription failed:", err);
+    return res.status(500).json({ message: "Could not save prescription." });
+  }
+}
+
 // DELETE /api/prescriptions/:id  (owner or admin)
 async function deletePrescription(req, res) {
   try {
@@ -122,5 +172,6 @@ module.exports = {
   getMyPrescriptions,
   getPrescriptionById,
   getPrescriptionsForPatient,
+  createWrittenPrescription,
   deletePrescription,
 };

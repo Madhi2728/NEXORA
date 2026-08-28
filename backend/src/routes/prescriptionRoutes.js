@@ -7,6 +7,7 @@ const {
   getMyPrescriptions,
   getPrescriptionById,
   getPrescriptionsForPatient,
+  createWrittenPrescription,
   deletePrescription,
 } = require("../controllers/prescriptionController");
 
@@ -19,6 +20,14 @@ router.post(
 );
 
 router.get("/me", verifyToken, requireRole("patient"), getMyPrescriptions);
+
+router.post(
+  "/written",
+  verifyToken,
+  requireRole("doctor", "admin"),
+  createWrittenPrescription
+);
+
 router.get("/:id", verifyToken, getPrescriptionById);
 router.delete("/:id", verifyToken, requireRole("patient", "admin"), deletePrescription);
 

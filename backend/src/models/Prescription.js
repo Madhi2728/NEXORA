@@ -20,9 +20,11 @@ const Prescription = sequelize.define(
       allowNull: true,
     },
     file_path: {
-      // Relative path under /uploads, e.g. "prescriptions/xyz.jpg"
+      // Relative path under /uploads, e.g. "prescriptions/xyz.jpg".
+      // Nullable: doctor-written prescriptions (source === "written") have no
+      // uploaded image.
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     ocr_text: {
       type: DataTypes.TEXT,
@@ -61,6 +63,30 @@ const Prescription = sequelize.define(
       type: DataTypes.JSONB,
       allowNull: true,
       defaultValue: [],
+    },
+    // ----- Doctor-written prescriptions (from PrescriptionNotebook) -----
+    source: {
+      // "ocr"     -> uploaded + OCR'd prescription image (default, legacy rows)
+      // "written" -> typed by a doctor in the Prescription Notebook
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "ocr",
+    },
+    written_medications: {
+      // Array of { name, dosage, frequency, duration }
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
+    prescribed_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    doctor_user_id: {
+      // The doctor User who wrote it (null for OCR uploads)
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: { model: User, key: "id" },
     },
     notes: {
       type: DataTypes.TEXT,

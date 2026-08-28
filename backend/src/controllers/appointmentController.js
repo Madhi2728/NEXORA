@@ -1,6 +1,23 @@
 const Appointment = require("../models/Appointment");
 const DoctorProfile = require("../models/DoctorProfile");
 const Hospital = require("../models/Hospital");
+const User = require("../models/User");
+const PatientProfile = require("../models/PatientProfile");
+
+function ageFromDob(dob) {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age -= 1;
+  return age;
+}
+
+function todayISO() {
+  return new Date().toISOString().split("T")[0];
+}
 
 // POST /api/appointments/book
 async function bookAppointment(req, res) {
@@ -75,4 +92,51 @@ async function cancelAppointment(req, res) {
   }
 }
 
-module.exports = { bookAppointment, getMyAppointments, cancelAppointment };
+// GET /api/appointments/doctor/queue   (doctor)
+// Today's appointments owned by the logged-in doctor User, time-ordered, with
+// just enough patient context for the dashboard queue + record/message actions.
+async function getDoctorQueue(req, res) {
+  try {
+    const appointments = await Appointment.findAll({
+      where: { doctor_user_id: req.user.id, appointment_date: todayISO() },
+      include: [
+        {
+          model: User,
+          as: "patient",
+          attributes: ["id", "name"],
+          include: [
+            {
+              model: PatientProfile,
+              as: "profile",
+              attributes: ["date_of_birth", "sex"],
+            },
+          ],
+        },
+      ],
+      order: [["appointment_time", "ASC"]],
+    });
+
+    const queue = appointments.map((a) => ({
+      id: a.id,
+      time: a.appointment_time,
+      status: a.status,
+      chiefComplaint: a.chief_complaint || a.notes || null,
+      patientId: a.patient?.id || null,
+      patientName: a.patient?.name || "Unknown",
+      patientAge: ageFromDob(a.patient?.profile?.date_of_birth),
+      patientSex: a.patient?.profile?.sex || null,
+    }));
+
+    return res.json({ queue });
+  } catch (err) {
+    console.error("getDoctorQueue failed:", err);
+    return res.status(500).json({ message: "Could not fetch the patient queue." });
+  }
+}
+
+module.exports = {
+  bookAppointment,
+  getMyAppointments,
+  cancelAppointment,
+  getDoctorQueue,
+};

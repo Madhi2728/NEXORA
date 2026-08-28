@@ -20,3 +20,10 @@ export async function getPrescriptionById(id) {
 export async function deletePrescription(id) {
   await api.delete(`/prescriptions/${id}`);
 }
+
+// Doctor/admin: persist a prescription typed in the Prescription Notebook.
+// payload: { patient_id, prescribed_date, medicines: [{name,dosage,frequency,duration}], notes }
+export async function createWrittenPrescription(payload) {
+  const { data } = await api.post("/prescriptions/written", payload);
+  return data.prescription;
+}

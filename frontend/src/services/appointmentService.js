@@ -20,6 +20,13 @@ export async function getMyAppointments() {
   return data.appointments;
 }
 
+// Doctor only: today's queue for the logged-in doctor. Each row:
+//   { id, time, status, chiefComplaint, patientId, patientName, patientAge, patientSex }
+export async function getDoctorQueue() {
+  const { data } = await api.get("/appointments/doctor/queue");
+  return data.queue;
+}
+
 export async function cancelAppointment(id) {
   await api.delete(`/appointments/${id}`);
 }

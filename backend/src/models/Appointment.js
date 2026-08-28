@@ -22,6 +22,15 @@ const Appointment = sequelize.define(
       allowNull: false,
       references: { model: DoctorProfile, key: "id" },
     },
+    // The logged-in doctor User this appointment belongs to (nullable — the
+    // patient-facing booking flow books against the DoctorProfile directory,
+    // which isn't tied to real doctor logins. Set when a doctor's own queue
+    // is seeded / created).
+    doctor_user_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: { model: User, key: "id" },
+    },
     hospital_id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -30,6 +39,7 @@ const Appointment = sequelize.define(
     appointment_date: { type: DataTypes.DATEONLY, allowNull: false },
     appointment_time: { type: DataTypes.STRING, allowNull: false }, // e.g. "10:30"
     status: { type: DataTypes.STRING, allowNull: false, defaultValue: "confirmed" },
+    chief_complaint: { type: DataTypes.STRING, allowNull: true }, // reason for visit
     notes: { type: DataTypes.TEXT, allowNull: true },
   },
   {
@@ -41,6 +51,7 @@ const Appointment = sequelize.define(
 );
 
 Appointment.belongsTo(User, { foreignKey: "patient_id", as: "patient" });
+Appointment.belongsTo(User, { foreignKey: "doctor_user_id", as: "doctorUser" });
 Appointment.belongsTo(DoctorProfile, { foreignKey: "doctor_id", as: "doctor" });
 Appointment.belongsTo(Hospital, { foreignKey: "hospital_id", as: "hospital" });
 

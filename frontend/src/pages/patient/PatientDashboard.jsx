@@ -7,6 +7,7 @@ import MedicalChatbot from "../chatbot/MedicalChatbot";
 import AppointmentBooking from "../appointments/AppointmentBooking";
 import SectionCard from "../../components/common/SectionCard";
 import NotificationBell from "../../components/common/NotificationBell";
+import MessageInboxBell from "../../components/common/MessageInboxBell";
 import { Activity, Bot, ScanLine, Pill, FileText, CalendarCheck } from "lucide-react";
 import { ThemeProvider } from "../../context/ThemeContext";
 import ThemeToggle from "../../components/ThemeToggle";
@@ -29,6 +30,7 @@ export default function PatientDashboard() {
             </div>
             <div className="flex items-center gap-5">
               <ThemeToggle />
+              <MessageInboxBell />
               <NotificationBell />
               <button onClick={logout} className="text-sm text-red-400">
                 Log out
