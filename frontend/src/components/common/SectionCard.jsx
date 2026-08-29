@@ -19,18 +19,22 @@ export default function SectionCard({
   fullHeight = false,
   headerExtra,
   className = "",
+  id,
   children,
 }) {
   return (
     <div
-      className={`rounded-2xl shadow-sm border border-slate-700 bg-slate-800 overflow-hidden ${
+      id={id}
+      className={`scroll-mt-6 rounded-2xl shadow-sm border border-slate-700 bg-slate-800 overflow-hidden transition-shadow duration-500 ${
         fullHeight ? `${FULL_HEIGHT} flex flex-col` : ""
       } ${className}`}
     >
       {/* Top accent bar */}
       <div className={`h-1.5 rounded-t-2xl bg-gradient-to-r ${accent}`} />
 
-      <div className={`p-5 ${fullHeight ? "flex-1 flex flex-col min-h-0" : ""}`}>
+      <div
+        className={`p-5 ${fullHeight ? "flex-1 flex flex-col min-h-0" : ""}`}
+      >
         {/* Header — stays fixed, never scrolls */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div className="flex items-center gap-2.5">
@@ -39,7 +43,7 @@ export default function SectionCard({
             >
               <Icon size={18} />
             </div>
-            <h2 className="font-semibold text-slate-100">{title}</h2>
+            <h2 className="font-bold text-slate-100">{title}</h2>
           </div>
           {headerExtra}
         </div>

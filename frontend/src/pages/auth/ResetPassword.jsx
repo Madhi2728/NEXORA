@@ -39,7 +39,7 @@ export default function ResetPassword() {
 
   return (
     <AuthLayout>
-      <h3 className="text-2xl font-semibold text-foreground">Set a new password</h3>
+      <h3 className="text-2xl font-bold text-foreground">Set a new password</h3>
       <p className="mt-2 text-sm text-muted-foreground">
         Enter the 6-digit code we emailed you, along with your new password.
       </p>

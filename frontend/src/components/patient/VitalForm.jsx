@@ -28,7 +28,7 @@ export default function VitalForm({ type, onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-slate-800 rounded-xl shadow-sm p-5 space-y-3">
-      <h3 className="font-semibold text-slate-100">
+      <h3 className="font-bold text-slate-100">
         Log a reading — <span className="text-violet-300">{meta.label}</span>
       </h3>
       <div className="flex gap-2 min-w-0">

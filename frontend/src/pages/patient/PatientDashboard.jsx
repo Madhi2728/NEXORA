@@ -25,7 +25,7 @@ export default function PatientDashboard() {
         <div className="relative max-w-7xl mx-auto p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-xl font-semibold text-slate-100">Patient Dashboard</h1>
+              <h1 className="text-xl font-bold text-slate-100">Patient Dashboard</h1>
               <p className="text-sm text-slate-400">Welcome, {user?.name}</p>
             </div>
             <div className="flex items-center gap-5">

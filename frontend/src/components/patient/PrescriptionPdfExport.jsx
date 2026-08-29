@@ -115,7 +115,7 @@ export default function PrescriptionPdfExport({ prescription, patientName }) {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-slate-700 flex-shrink-0">
-              <h3 className="font-semibold text-slate-100">Review before download</h3>
+              <h3 className="font-bold text-slate-100">Review before download</h3>
               <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-200">
                 <X size={18} />
               </button>

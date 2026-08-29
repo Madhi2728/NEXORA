@@ -111,13 +111,13 @@ export default function MedicalReportAnalysis() {
                 {r.status === "done" && (
                   <>
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-200 mb-2">Findings</h3>
+                      <h3 className="text-sm font-bold text-slate-200 mb-2">Findings</h3>
                       <ReportFindings findings={r.findings} />
                     </div>
 
                     {r.detected_medicines?.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-slate-200 mb-2">
+                        <h3 className="text-sm font-bold text-slate-200 mb-2">
                           Medicines mentioned
                         </h3>
                         <div className="grid sm:grid-cols-2 gap-3">

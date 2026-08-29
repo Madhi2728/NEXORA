@@ -54,7 +54,7 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <h3 className="text-2xl font-semibold text-foreground">Sign in</h3>
+      <h3 className="text-2xl font-bold text-foreground">Sign in</h3>
       <p className="mt-2 text-sm text-muted-foreground">Welcome back to Nexora Health.</p>
 
       <div className="mt-6 space-y-2">

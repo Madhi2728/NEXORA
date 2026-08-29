@@ -17,3 +17,15 @@ export async function getMyReports() {
 export async function deleteReport(id) {
   await api.delete(`/medical-reports/${id}`);
 }
+
+// Doctor/admin: reports still awaiting review.
+export async function getPendingReports() {
+  const { data } = await api.get("/medical-reports/pending");
+  return data.reports;
+}
+
+// Doctor/admin: every non-normal lab finding, flattened + severity-sorted.
+export async function getFlaggedReports() {
+  const { data } = await api.get("/medical-reports/flagged");
+  return data.alerts;
+}

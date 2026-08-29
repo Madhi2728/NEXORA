@@ -74,7 +74,7 @@ export default function MessageComposer({ recipient, onClose, onSent }) {
               <MessageSquare size={18} />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-100">New Message</h2>
+              <h2 className="font-bold text-slate-100">New Message</h2>
               <p className="text-xs text-slate-400">
                 To {recipient?.name || "—"}
                 {recipient?.role ? ` · ${recipient.role}` : ""}

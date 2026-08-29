@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { Mail, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -23,7 +30,11 @@ function timeAgo(value) {
 
 // Navbar bell for async direct messages. Polls the unread count every 30s and,
 // when opened, loads the inbox; clicking a message marks it read.
-export default function MessageInboxBell() {
+//
+// Exposes an imperative `open()` (via ref) so a sibling — e.g. the dashboard's
+// "Unread Messages" stat card — can pop the dropdown. `onCountChange` reports
+// the live unread count up so that same card can show it without polling twice.
+function MessageInboxBell({ onCountChange }, ref) {
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -31,6 +42,12 @@ export default function MessageInboxBell() {
   const [count, setCount] = useState(0);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
+
+  useEffect(() => {
+    onCountChange?.(count);
+  }, [count, onCountChange]);
 
   const refreshCount = useCallback(() => {
     if (!userId) return;
@@ -151,3 +168,5 @@ export default function MessageInboxBell() {
     </div>
   );
 }
+
+export default forwardRef(MessageInboxBell);

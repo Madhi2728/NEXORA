@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../../context/AuthContext";
 import SectionCard from "../../components/common/SectionCard";
 import NotificationBell from "../../components/common/NotificationBell";
+import MessageInboxBell from "../../components/common/MessageInboxBell";
 import PrescriptionNotebook from "../../components/doctor/PrescriptionNotebook";
 import PatientRecordsPanel from "../../components/doctor/PatientRecordsPanel";
 import MessageComposer from "../../components/common/MessageComposer";
 import { getDoctorQueue } from "../../services/appointmentService";
 import { createWrittenPrescription } from "../../services/prescriptionService";
+import {
+  getPendingReports,
+  getFlaggedReports,
+} from "../../services/medicalReportService";
 import { ThemeProvider } from "../../context/ThemeContext";
 import ThemeToggle from "../../components/ThemeToggle";
 import {
@@ -23,6 +29,8 @@ import {
   Pill,
   FolderOpen,
   ShieldCheck,
+  NotebookPen,
+  X,
 } from "lucide-react";
 
 /**
@@ -49,45 +57,31 @@ import {
 
 // ---------- Mock data (replace with API calls) ----------
 
-// TODO: replace with GET /api/doctor/stats
-const STATS = [
-  {
-    id: "appointments",
-    label: "Today's Appointments",
-    value: 8,
-    sub: "Next: 10:30 AM",
+// Static presentation only — icon + colours per stat card. The `value` and
+// `sub` are computed from live data in the component, and each card wires up a
+// real action (scroll to a section, open a modal, pop the message dropdown).
+const STAT_META = {
+  appointments: {
     icon: CalendarClock,
     accent: "text-sky-300",
     iconBg: "bg-sky-900/40",
   },
-  {
-    id: "pending-reports",
-    label: "Pending Reports",
-    value: 5,
-    sub: "Awaiting review",
+  "pending-reports": {
     icon: ClipboardList,
     accent: "text-amber-300",
     iconBg: "bg-amber-900/40",
   },
-  {
-    id: "critical",
-    label: "Critical Alerts",
-    value: 3,
-    sub: "Needs action",
+  critical: {
     icon: AlertTriangle,
     accent: "text-rose-300",
     iconBg: "bg-rose-900/40",
   },
-  {
-    id: "messages",
-    label: "Unread Messages",
-    value: 4,
-    sub: "From patients",
+  messages: {
     icon: MessageSquare,
     accent: "text-indigo-300",
     iconBg: "bg-indigo-900/40",
   },
-];
+};
 
 // Shown until GET /api/appointments/doctor/queue returns rows (fresh DB, or
 // logged in as a doctor with no seeded queue). `patientId: null` marks a row
@@ -145,8 +139,8 @@ const FALLBACK_QUEUE = [
   },
 ];
 
-// TODO: replace with GET /api/doctor/alerts/critical
-const CRITICAL_ALERTS = [
+// Shown until GET /api/medical-reports/flagged returns rows (fresh DB).
+const FALLBACK_ALERTS = [
   {
     id: 1,
     patient: "Karthik Subramaniam",
@@ -219,9 +213,37 @@ const TOP_CONDITIONS = [
 
 // ---------- Small presentational pieces ----------
 
-function StatTile({ icon: Icon, label, value, sub, accent, iconBg }) {
+function formatWhen(value) {
+  if (!value) return "";
+  if (typeof value === "string" && !/\d{4}-\d{2}-\d{2}/.test(value))
+    return value;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  const today = new Date();
+  const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const days = Math.round((startOf(today) - startOf(d)) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return d.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function StatTile({ icon: Icon, label, value, sub, accent, iconBg, onClick }) {
+  const clickable = typeof onClick === "function";
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 flex items-start gap-3">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!clickable}
+      className={`w-full text-left rounded-2xl border border-slate-800 bg-slate-900/60 p-4 flex items-start gap-3 ${
+        clickable
+          ? "transition-all duration-200 hover:border-slate-600 hover:bg-slate-900 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+          : "cursor-default"
+      }`}
+    >
       <div
         className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center ${iconBg} ${accent}`}
       >
@@ -234,7 +256,7 @@ function StatTile({ icon: Icon, label, value, sub, accent, iconBg }) {
         <p className="text-sm text-slate-300 mt-1 truncate">{label}</p>
         <p className="text-xs text-slate-500 mt-0.5 truncate">{sub}</p>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -244,7 +266,7 @@ const STATUS_STYLES = {
   done: "bg-emerald-900/40 text-emerald-300",
 };
 
-function AppointmentRow({ appt, onView, onMessage }) {
+function AppointmentRow({ appt, onView, onPrescribe, onMessage }) {
   const hasAccount = Boolean(appt.patientId);
   const meta = [
     appt.patientAge != null ? String(appt.patientAge) : null,
@@ -279,6 +301,19 @@ function AppointmentRow({ appt, onView, onMessage }) {
           <FileText className="h-3.5 w-3.5" />
         </button>
         <button
+          onClick={() => onPrescribe(appt)}
+          disabled={!hasAccount}
+          className="rounded-lg border border-slate-700 p-1.5 text-slate-400 transition-colors hover:border-violet-500/50 hover:text-violet-300 disabled:opacity-40 disabled:hover:border-slate-700 disabled:hover:text-slate-400"
+          title={
+            hasAccount
+              ? "Write prescription"
+              : "Demo patient — no account to prescribe for"
+          }
+          aria-label={`Write prescription for ${appt.patientName}`}
+        >
+          <NotebookPen className="h-3.5 w-3.5" />
+        </button>
+        <button
           onClick={() => onMessage(appt)}
           disabled={!hasAccount}
           className="rounded-lg border border-slate-700 p-1.5 text-slate-400 transition-colors hover:border-teal-500/50 hover:text-teal-300 disabled:opacity-40 disabled:hover:border-slate-700 disabled:hover:text-slate-400"
@@ -293,7 +328,7 @@ function AppointmentRow({ appt, onView, onMessage }) {
         </button>
       </div>
       <span
-        className={`text-xs px-2 py-1 rounded-full shrink-0 capitalize ${
+        className={`text-eyebrow px-2 py-1 rounded-full shrink-0 ${
           STATUS_STYLES[appt.status] || "bg-slate-700/60 text-slate-300"
         }`}
       >
@@ -324,7 +359,7 @@ function AlertRow({ alert }) {
         <p className="text-sm font-medium text-slate-100 truncate">
           {alert.patient}
         </p>
-        <span className="text-[11px] uppercase tracking-wide text-rose-300 shrink-0">
+        <span className="text-eyebrow text-rose-300 shrink-0">
           {FLAG_LABEL[alert.flag]}
         </span>
       </div>
@@ -375,40 +410,205 @@ function QuickActionButton({ icon: Icon, label, onClick }) {
   );
 }
 
+// Small modal shown by the "Write Prescription" Quick Action when no specific
+// patient row was clicked — pick who the prescription is for.
+function PatientPickerModal({ queue, onPick, onClose }) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 shadow-xl"
+      >
+        <div className="h-1.5 w-full bg-gradient-to-r from-violet-500 to-teal-500" />
+        <div className="flex items-center justify-between px-5 py-4">
+          <h2 className="font-bold text-slate-100">Write prescription for…</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-200"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="max-h-80 space-y-1 overflow-y-auto px-3 pb-3">
+          {queue.map((appt) => (
+            <button
+              key={appt.id}
+              disabled={!appt.patientId}
+              onClick={() => onPick(appt)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2.5 text-left transition-colors hover:border-violet-500/50 hover:bg-slate-900 disabled:opacity-40 disabled:hover:border-slate-700 disabled:hover:bg-slate-900/60"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm text-slate-100">
+                  {appt.patientName}
+                </span>
+                <span className="block truncate text-xs text-slate-500">
+                  {appt.time} · {appt.chiefComplaint || "—"}
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-500" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// Simple list of reports still awaiting review (GET /api/medical-reports/pending).
+function PendingReportsModal({ reports, onClose }) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 shadow-xl"
+      >
+        <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 to-orange-500" />
+        <div className="flex flex-shrink-0 items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-900/40 text-amber-300">
+              <ClipboardList size={18} />
+            </div>
+            <h2 className="font-bold text-slate-100">
+              Reports Awaiting Review
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-200"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
+          {reports.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500">
+              No reports awaiting review.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {reports.map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded-xl border border-slate-800 bg-slate-900/60 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm text-slate-100">{r.patientName}</p>
+                    <span className="text-eyebrow shrink-0 rounded-full bg-amber-900/40 px-2 py-0.5 text-amber-300">
+                      {r.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    {r.originalFilename || "Report"}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    {formatWhen(r.createdAt || r.documentDate)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function DoctorDashboard() {
   const { user } = useAuth();
-  const [notebookOpen, setNotebookOpen] = useState(false);
   const [queue, setQueue] = useState(FALLBACK_QUEUE);
+  const [criticalAlerts, setCriticalAlerts] = useState(FALLBACK_ALERTS);
+  const [pendingReports, setPendingReports] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const [notebookPatient, setNotebookPatient] = useState(null);
   const [recordsPatient, setRecordsPatient] = useState(null);
   const [messagePatient, setMessagePatient] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pendingOpen, setPendingOpen] = useState(false);
+  const [highlight, setHighlight] = useState(null); // "queue" | "alerts" | null
 
-  // Real queue for the logged-in doctor. Keep the fallback on failure / empty
-  // (fresh DB, or a doctor account with nothing seeded) so the page still renders.
+  const inboxRef = useRef(null);
+
+  // Live doctor-side data. Each falls back gracefully (fresh DB / no seed) so
+  // the dashboard always renders.
   useEffect(() => {
     getDoctorQueue()
       .then((rows) => {
         if (Array.isArray(rows) && rows.length) setQueue(rows);
       })
       .catch(() => {});
+    getFlaggedReports()
+      .then((rows) => {
+        if (Array.isArray(rows) && rows.length) setCriticalAlerts(rows);
+      })
+      .catch(() => {});
+    getPendingReports()
+      .then((rows) => setPendingReports(Array.isArray(rows) ? rows : []))
+      .catch(() => {});
   }, []);
 
   const maxLoad = Math.max(...PATIENT_LOAD.map((d) => d.count));
 
-  // The "active" patient the Quick Actions / Prescription Notebook act on:
-  // whoever the doctor is currently seeing, else the next one waiting, else the
-  // first slot.
+  // The "active" patient the View Record / Message Quick Actions act on:
+  // whoever the doctor is currently seeing, else the next one waiting.
   const activeAppt =
     queue.find((a) => a.status === "in-progress") ||
     queue.find((a) => a.status === "waiting") ||
     queue[0];
-  const activePatient = activeAppt
-    ? {
-        patientId: activeAppt.patientId,
-        name: activeAppt.patientName,
-        age: activeAppt.patientAge,
-        sex: activeAppt.patientSex,
-      }
-    : null;
+
+  const nextAppt =
+    queue.find((a) => a.status === "in-progress") ||
+    queue.find((a) => a.status === "waiting");
+
+  function scrollToSection(which) {
+    const el = document.getElementById(
+      which === "queue" ? "queue-card" : "alerts-card",
+    );
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setHighlight(which);
+    setTimeout(() => setHighlight((h) => (h === which ? null : h)), 2000);
+  }
+
+  const statCards = [
+    {
+      id: "appointments",
+      label: "Today's Appointments",
+      value: queue.length,
+      sub: nextAppt ? `Next: ${nextAppt.time}` : "None upcoming",
+      onClick: () => scrollToSection("queue"),
+    },
+    {
+      id: "pending-reports",
+      label: "Pending Reports",
+      value: pendingReports.length,
+      sub: "Awaiting review",
+      onClick: () => setPendingOpen(true),
+    },
+    {
+      id: "critical",
+      label: "Critical Alerts",
+      value: criticalAlerts.length,
+      sub: "Needs action",
+      onClick: () => scrollToSection("alerts"),
+    },
+    {
+      id: "messages",
+      label: "Unread Messages",
+      value: unreadCount,
+      sub: "From patients",
+      onClick: () => inboxRef.current?.open(),
+    },
+  ];
 
   function openRecords(appt) {
     setRecordsPatient({
@@ -427,6 +627,18 @@ export default function DoctorDashboard() {
     });
   }
 
+  // Open the Prescription Notebook for a specific queue row, pre-filled with
+  // that patient's real id/name/age/sex. Real patient accounts only.
+  function openNotebook(appt) {
+    if (!appt?.patientId) return;
+    setNotebookPatient({
+      patientId: appt.patientId,
+      name: appt.patientName,
+      age: appt.patientAge,
+      sex: appt.patientSex,
+    });
+  }
+
   return (
     <ThemeProvider>
       <div className="relative min-h-screen bg-slate-950 overflow-hidden">
@@ -438,7 +650,7 @@ export default function DoctorDashboard() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-xl font-semibold text-slate-100">
+              <h1 className="text-xl font-bold text-slate-100">
                 Doctor Dashboard
               </h1>
               <p className="text-sm text-slate-400">
@@ -447,16 +659,17 @@ export default function DoctorDashboard() {
             </div>
             <div className="flex items-center gap-5">
               <ThemeToggle />
+              <MessageInboxBell ref={inboxRef} onCountChange={setUnreadCount} />
               <NotificationBell />
               {/* TODO: hook up logout(), same as PatientDashboard */}
               <button className="text-sm text-red-400">Log out</button>
             </div>
           </div>
 
-          {/* Stats strip */}
+          {/* Stats strip — each card is now a real action + live number */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {STATS.map((s) => (
-              <StatTile key={s.id} {...s} />
+            {statCards.map((s) => (
+              <StatTile key={s.id} {...STAT_META[s.id]} {...s} />
             ))}
           </div>
 
@@ -471,7 +684,10 @@ export default function DoctorDashboard() {
           */}
           <div className="grid lg:grid-cols-3 gap-6 items-stretch">
             <SectionCard
-              className="lg:col-span-2"
+              id="queue-card"
+              className={`lg:col-span-2 ${
+                highlight === "queue" ? "ring-2 ring-sky-400/60" : ""
+              }`}
               icon={Users}
               title="Today's Patient Queue"
               accent="from-sky-500 to-blue-500"
@@ -484,6 +700,7 @@ export default function DoctorDashboard() {
                     key={appt.id}
                     appt={appt}
                     onView={openRecords}
+                    onPrescribe={openNotebook}
                     onMessage={openMessage}
                   />
                 ))}
@@ -491,6 +708,10 @@ export default function DoctorDashboard() {
             </SectionCard>
 
             <SectionCard
+              id="alerts-card"
+              className={
+                highlight === "alerts" ? "ring-2 ring-rose-400/60" : ""
+              }
               icon={AlertTriangle}
               title="Critical Alerts"
               accent="from-rose-500 to-red-500"
@@ -499,17 +720,23 @@ export default function DoctorDashboard() {
             >
               <div className="flex flex-1 flex-col">
                 <div className="flex-shrink-0">
-                  {CRITICAL_ALERTS.map((alert) => (
+                  {criticalAlerts.map((alert) => (
                     <AlertRow key={alert.id} alert={alert} />
                   ))}
                 </div>
-                <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700/70 px-4 py-6 text-center min-h-[6rem]">
-                  <ShieldCheck className="h-5 w-5 text-slate-600" />
-                  <p className="text-xs text-slate-500">No further alerts</p>
-                  <p className="text-[11px] text-slate-600">
-                    You're all caught up
-                  </p>
-                </div>
+                {criticalAlerts.length < 4 && (
+                  <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700/70 px-4 py-6 text-center min-h-[6rem]">
+                    <ShieldCheck className="h-5 w-5 text-slate-600" />
+                    <p className="text-xs text-slate-500">
+                      {criticalAlerts.length === 0
+                        ? "No critical alerts"
+                        : "No further alerts"}
+                    </p>
+                    <p className="text-[11px] text-slate-600">
+                      You're all caught up
+                    </p>
+                  </div>
+                )}
               </div>
             </SectionCard>
           </div>
@@ -541,7 +768,7 @@ export default function DoctorDashboard() {
                 <QuickActionButton
                   icon={Pill}
                   label="Write Prescription"
-                  onClick={() => setNotebookOpen(true)}
+                  onClick={() => setPickerOpen(true)}
                 />
                 <QuickActionButton
                   icon={FileText}
@@ -611,22 +838,34 @@ export default function DoctorDashboard() {
           </div>
         </div>
 
-        {notebookOpen && (
+        {pickerOpen && (
+          <PatientPickerModal
+            queue={queue}
+            onClose={() => setPickerOpen(false)}
+            onPick={(appt) => {
+              setPickerOpen(false);
+              openNotebook(appt);
+            }}
+          />
+        )}
+
+        {pendingOpen && (
+          <PendingReportsModal
+            reports={pendingReports}
+            onClose={() => setPendingOpen(false)}
+          />
+        )}
+
+        {notebookPatient && (
           <PrescriptionNotebook
-            patient={activePatient}
+            patient={notebookPatient}
             doctorName={user?.name}
-            onClose={() => setNotebookOpen(false)}
+            onClose={() => setNotebookPatient(null)}
             onSave={async (prescription) => {
-              if (!activePatient?.patientId) {
-                // Demo queue row — no patient account to attach it to.
-                console.log(
-                  "Prescription saved (demo, not persisted):",
-                  prescription,
-                );
-                return;
-              }
+              // Always a real patient id here — openNotebook() guards against
+              // demo rows, so this hits POST /api/prescriptions/written.
               await createWrittenPrescription({
-                patient_id: activePatient.patientId,
+                patient_id: notebookPatient.patientId,
                 prescribed_date: prescription.prescribed_date,
                 medicines: prescription.medicines,
                 notes: prescription.notes,

@@ -4,8 +4,13 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        // One family, one system. `heading` / `body` are the names to use in
+        // new code; `sans` / `display` stay as aliases so existing utilities
+        // (font-sans, font-display) keep working — all resolve to Inter now.
         sans: ['"Inter"', "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ['"Sora"', "ui-sans-serif", "system-ui", "sans-serif"],
+        heading: ['"Inter"', "ui-sans-serif", "system-ui", "sans-serif"],
+        body: ['"Inter"', "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ['"Inter"', "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         // Nexora auth theme (ported from the Lovable design) — used by the

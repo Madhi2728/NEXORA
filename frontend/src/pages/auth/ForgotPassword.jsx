@@ -30,7 +30,7 @@ export default function ForgotPassword() {
 
   return (
     <AuthLayout>
-      <h3 className="text-2xl font-semibold text-foreground">Reset your password</h3>
+      <h3 className="text-2xl font-bold text-foreground">Reset your password</h3>
       <p className="mt-2 text-sm text-muted-foreground">
         Enter your email and we'll send you a 6-digit code to reset your password.
       </p>

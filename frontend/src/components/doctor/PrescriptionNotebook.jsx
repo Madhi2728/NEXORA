@@ -201,7 +201,7 @@ export default function PrescriptionNotebook({ patient, doctorName, onClose, onS
               <NotebookPen size={18} />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-100">Prescription Notebook</h2>
+              <h2 className="font-bold text-slate-100">Prescription Notebook</h2>
               <p className="text-xs text-slate-400">
                 {patientName
                   ? `${patientName}${patientMeta ? ` · ${patientMeta}` : ""}`

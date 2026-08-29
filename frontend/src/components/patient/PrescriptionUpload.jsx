@@ -54,7 +54,7 @@ export default function PrescriptionUpload({
 
   return (
     <div className="bg-slate-800 rounded-xl shadow-sm p-5 space-y-4">
-      <h3 className="font-semibold text-slate-100">{title}</h3>
+      <h3 className="font-bold text-slate-100">{title}</h3>
 
       <label
         htmlFor={inputId}

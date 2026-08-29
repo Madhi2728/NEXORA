@@ -51,7 +51,7 @@ function Section({ icon: Icon, title, children }) {
     <div className="rounded-xl border border-slate-800 bg-slate-800/60 p-4">
       <div className="mb-3 flex items-center gap-2">
         <Icon className="h-4 w-4 text-violet-300" />
-        <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
+        <h3 className="text-sm font-bold text-slate-100">{title}</h3>
       </div>
       {children}
     </div>
@@ -158,7 +158,7 @@ export default function PatientRecordsPanel({
               <FolderOpen size={18} />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-100">Patient Record</h2>
+              <h2 className="font-bold text-slate-100">Patient Record</h2>
               <p className="text-xs text-slate-400">{headerName}</p>
             </div>
           </div>

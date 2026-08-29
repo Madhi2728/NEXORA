@@ -1,18 +1,42 @@
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html {
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+/* ---------------------------------------------------------------------
+ * Typography — one family (Inter) everywhere, as project-wide defaults:
+ *   headings  -> Inter, bold (700), tight tracking (-0.02em)
+ *   body      -> Inter, regular (400)
+ *   eyebrows  -> .text-eyebrow (uppercase, wide-tracked, xs, semibold)
+ * An explicit font-* / tracking-* utility on a component still wins, so
+ * nothing has to opt in.
+ * ------------------------------------------------------------------- */
+@layer base {
+  html,
+  body {
+    font-family: theme("fontFamily.body");
+    font-weight: 400;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-display {
+    font-family: theme("fontFamily.heading");
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 }
 
-h1,
-h2,
-h3,
-.font-display {
-  font-family: "Sora", ui-sans-serif, system-ui, sans-serif;
+@layer components {
+  /* Small uppercase label / eyebrow — "PRECISION CARE CHALLENGE" style */
+  .text-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wider;
+  }
 }
 
 @keyframes fade-in-up {
@@ -129,7 +153,7 @@ h3,
 }
 
 .font-nexora-sans {
-  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  font-family: theme("fontFamily.body");
 }
 
 .glass-panel {
