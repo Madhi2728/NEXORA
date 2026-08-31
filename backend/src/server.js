@@ -13,6 +13,9 @@ require("./models/DoctorProfile");
 require("./models/Appointment");
 require("./models/PatientProfile");
 require("./models/Message");
+require("./models/DoctorVerification");
+require("./models/AuditLog");
+require("./models/ChatEvent");
 
 const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
@@ -26,6 +29,7 @@ const hospitalRoutes = require("./routes/hospitalRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const { warmCache } = require("./config/rxnormClient");
 
 const app = express();
@@ -51,6 +55,7 @@ app.use("/api/hospitals", hospitalRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 

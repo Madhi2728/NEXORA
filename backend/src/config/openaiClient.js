@@ -86,17 +86,23 @@ async function callGroq(history) {
   return data.choices?.[0]?.message?.content?.trim() || "";
 }
 
+// Returns { reply, provider, fellBack } so callers (and the admin AI Monitor)
+// can see which LLM answered and whether the primary one had to be bypassed.
 async function getChatReply(history) {
-  const provider = process.env.CHAT_PROVIDER || "auto";
+  const mode = process.env.CHAT_PROVIDER || "auto";
 
-  if (provider === "groq") return callGroq(history);
-  if (provider === "openai") return callOpenAI(history);
+  if (mode === "groq") {
+    return { reply: await callGroq(history), provider: "groq", fellBack: false };
+  }
+  if (mode === "openai") {
+    return { reply: await callOpenAI(history), provider: "openai", fellBack: false };
+  }
 
   try {
-    return await callOpenAI(history);
+    return { reply: await callOpenAI(history), provider: "openai", fellBack: false };
   } catch (err) {
     console.warn("OpenAI failed, falling back to Groq:", err.message);
-    return callGroq(history);
+    return { reply: await callGroq(history), provider: "groq", fellBack: true };
   }
 }
 

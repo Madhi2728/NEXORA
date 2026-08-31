@@ -68,6 +68,9 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
+    user.last_login_at = new Date();
+    await user.save();
+
     const token = signToken(user);
     return res.json({ token, user: publicUser(user) });
   } catch (err) {

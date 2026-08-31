@@ -5,6 +5,8 @@
 // Fine for a single backend instance; swap for a Redis-backed limiter
 // if you ever run multiple backend processes/instances.
 
+const ChatEvent = require("../models/ChatEvent");
+
 const WINDOW_MS = 60 * 1000; // 1 minute window
 const MAX_REQUESTS = 8; // max chat messages per user per window
 
@@ -18,6 +20,7 @@ function chatRateLimit(req, res, next) {
   const timestamps = (hits.get(userId) || []).filter((t) => now - t < WINDOW_MS);
 
   if (timestamps.length >= MAX_REQUESTS) {
+    ChatEvent.log({ user_id: userId, type: "rate_limited" });
     return res.status(429).json({
       message: "You're sending messages too quickly. Please wait a moment and try again.",
     });

@@ -1,4 +1,5 @@
 const ChatMessage = require("../models/ChatMessage");
+const ChatEvent = require("../models/ChatEvent");
 const { getChatReply } = require("../config/openaiClient");
 const { detectCrisis, RESPONSES } = require("../utils/crisisDetector");
 
@@ -14,6 +15,7 @@ async function sendMessage(req, res) {
 
     // Always save the user's message first, regardless of what happens next.
     await ChatMessage.create({ user_id: req.user.id, role: "user", content: message.trim() });
+    ChatEvent.log({ user_id: req.user.id, type: "message" });
 
     // Safety net: for crisis-pattern messages, skip the LLM entirely and
     // return a fixed, reliable response with real emergency resources.
@@ -21,6 +23,7 @@ async function sendMessage(req, res) {
     if (crisisType) {
       const reply = RESPONSES[crisisType];
       await ChatMessage.create({ user_id: req.user.id, role: "assistant", content: reply });
+      ChatEvent.log({ user_id: req.user.id, type: "crisis_flag", metadata: { crisisType } });
       return res.json({ reply, crisis: true });
     }
 
@@ -33,8 +36,11 @@ async function sendMessage(req, res) {
       .reverse()
       .map((m) => ({ role: m.role, content: m.content }));
 
-    const reply = await getChatReply(history);
+    const { reply, provider, fellBack } = await getChatReply(history);
     await ChatMessage.create({ user_id: req.user.id, role: "assistant", content: reply });
+    if (fellBack) {
+      ChatEvent.log({ user_id: req.user.id, type: "provider_fallback", provider });
+    }
 
     return res.json({ reply, crisis: false });
   } catch (err) {

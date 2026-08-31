@@ -32,6 +32,10 @@ const User = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    last_login_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     reset_otp: {
       type: DataTypes.STRING,
       allowNull: true,
