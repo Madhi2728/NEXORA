@@ -37,7 +37,7 @@ export default function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           <Route
-            path="/admin"
+            path="/admin/*"
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminDashboard />

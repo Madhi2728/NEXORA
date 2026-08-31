@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   listHospitals,
-  listDoctorsForHospital,
   bookAppointment,
 } from "../../services/appointmentService";
 import HospitalMap from "../../components/patient/HospitalMap";
@@ -27,17 +26,16 @@ export default function AppointmentBooking() {
       .catch(() => {});
   }, []);
 
-  async function handleSelectHospital(h) {
+  function handleSelectHospital(h) {
     setSelectedHospital(h);
     setMessage("");
-    setMapCenter([h.latitude, h.longitude]);
-    setMapZoom(15);
-    try {
-      const docs = await listDoctorsForHospital(h.id);
-      setDoctors(docs);
-    } catch {
-      setDoctors([]);
+    if (h.latitude != null && h.longitude != null) {
+      setMapCenter([h.latitude, h.longitude]);
+      setMapZoom(15);
     }
+    // Doctors now come embedded on the hospital from the public directory
+    // endpoint (admin-managed HospitalDoctor links).
+    setDoctors(Array.isArray(h.doctors) ? h.doctors : []);
   }
 
   function handleSearchResults(results) {
@@ -73,15 +71,20 @@ export default function AppointmentBooking() {
 
       {searchResults.length > 0 && (
         <p className="text-xs text-slate-500">
-          Grey pins are real places from OpenStreetMap search results, shown for reference —
-          only the colored pins (our demo hospitals/clinics) are bookable right now.
+          Grey pins are real places from OpenStreetMap search results, shown for
+          reference — only the colored pins (our demo hospitals/clinics) are
+          bookable right now.
         </p>
       )}
 
       {selectedHospital ? (
         <div>
-          <p className="text-sm font-medium text-slate-100">{selectedHospital.name}</p>
-          <p className="text-xs text-slate-400 mb-2">{selectedHospital.address}</p>
+          <p className="text-sm font-medium text-slate-100">
+            {selectedHospital.name}
+          </p>
+          <p className="text-xs text-slate-400 mb-2">
+            {selectedHospital.address}
+          </p>
           <DoctorList doctors={doctors} onBook={setBookingDoctor} />
         </div>
       ) : (
@@ -102,8 +105,8 @@ export default function AppointmentBooking() {
       )}
 
       <p className="text-xs text-slate-500">
-        Demo data — our hospitals/clinics and doctor schedules are for demonstration, not real
-        bookable providers yet.
+        Demo data — our hospitals/clinics and doctor schedules are for
+        demonstration, not real bookable providers yet.
       </p>
     </div>
   );

@@ -17,13 +17,25 @@ function generateSlots(start, end, durationMin = 30) {
   return slots;
 }
 
-export default function BookAppointmentModal({ doctor, hospital, onClose, onConfirm }) {
+export default function BookAppointmentModal({
+  doctor,
+  hospital,
+  onClose,
+  onConfirm,
+}) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const slots = generateSlots(doctor.start_time, doctor.end_time, doctor.slot_duration_minutes || 30);
+  // Legacy DoctorProfile rows carry a schedule; Hospital Directory doctor
+  // Users don't, so fall back to a standard 09:00–17:00 / 30-min window.
+  const isUserDoctor = !doctor.days_available && !doctor.start_time;
+  const slots = generateSlots(
+    doctor.start_time || "09:00",
+    doctor.end_time || "17:00",
+    doctor.slot_duration_minutes || 30,
+  );
   const today = new Date().toISOString().split("T")[0];
 
   async function handleConfirm() {
@@ -35,7 +47,9 @@ export default function BookAppointmentModal({ doctor, hospital, onClose, onConf
     setError("");
     try {
       await onConfirm({
-        doctor_id: doctor.id,
+        ...(isUserDoctor
+          ? { doctor_user_id: doctor.id }
+          : { doctor_id: doctor.id }),
         hospital_id: hospital.id,
         appointment_date: date,
         appointment_time: time,
@@ -53,12 +67,16 @@ export default function BookAppointmentModal({ doctor, hospital, onClose, onConf
       <div className="bg-slate-800 rounded-xl p-5 w-full max-w-sm space-y-3 border border-slate-700">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-slate-100">Book with {doctor.name}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-200"
+          >
             <X size={18} />
           </button>
         </div>
         <p className="text-xs text-slate-400">
-          {hospital.name} — {doctor.specialization}
+          {hospital.name} —{" "}
+          {doctor.department || doctor.specialization || "General Medicine"}
         </p>
 
         <div>
@@ -101,6 +119,6 @@ export default function BookAppointmentModal({ doctor, hospital, onClose, onConf
         </button>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
