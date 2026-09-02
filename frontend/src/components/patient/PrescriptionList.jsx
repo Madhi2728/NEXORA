@@ -20,7 +20,8 @@ function StatusBadge({ status }) {
 }
 
 export default function PrescriptionList({ prescriptions, onDelete }) {
-  if (!prescriptions.length) {
+  const rows = Array.isArray(prescriptions) ? prescriptions : [];
+  if (!rows.length) {
     return (
       <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
         No prescriptions uploaded yet.
@@ -30,7 +31,7 @@ export default function PrescriptionList({ prescriptions, onDelete }) {
 
   return (
     <div className="space-y-3">
-      {prescriptions.map((p) => (
+      {rows.map((p) => (
         <div key={p.id} className="bg-slate-800 rounded-xl shadow-sm p-4 space-y-3">
           <div className="flex gap-4">
             <img

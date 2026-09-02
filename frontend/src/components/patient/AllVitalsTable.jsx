@@ -1,9 +1,10 @@
 import { labelFor, unitFor } from "../../utils/vitalTypes";
 
 export default function AllVitalsTable({ vitals, onDelete }) {
-  if (!vitals.length) return null;
+  const rows = Array.isArray(vitals) ? vitals : [];
+  if (!rows.length) return null;
 
-  const sorted = [...vitals].sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at));
+  const sorted = [...rows].sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at));
 
   return (
     <div className="bg-slate-800 rounded-xl shadow-sm overflow-hidden">

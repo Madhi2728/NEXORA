@@ -1,5 +1,6 @@
 export default function DoctorList({ doctors, onBook }) {
-  if (!doctors.length) {
+  const rows = Array.isArray(doctors) ? doctors : [];
+  if (!rows.length) {
     return (
       <p className="text-sm text-slate-400 text-center py-4">
         No doctors listed for this location yet.
@@ -9,7 +10,7 @@ export default function DoctorList({ doctors, onBook }) {
 
   return (
     <div className="space-y-2">
-      {doctors.map((d) => {
+      {rows.map((d) => {
         // New shape (HospitalDoctor): { id, name, department, fee }
         // Legacy shape (DoctorProfile): { id, name, specialization, days_available, ... }
         const subtitle = d.department || d.specialization || "General Medicine";

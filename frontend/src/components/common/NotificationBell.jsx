@@ -22,11 +22,11 @@ export default function NotificationBell() {
 
   useEffect(() => {
     getMyAppointments()
-      .then(setAppointments)
-      .catch(() => {});
+      .then((a) => setAppointments(Array.isArray(a) ? a : []))
+      .catch(() => setAppointments([]));
   }, []);
 
-  const visible = appointments.filter((a) => !dismissed.has(a.id));
+  const visible = (appointments || []).filter((a) => !dismissed.has(a.id));
 
   function dismiss(id) {
     const next = new Set(dismissed);

@@ -6,11 +6,12 @@ export default function HospitalSearchBar({ hospitals, onSelectHospital, onSearc
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
 
-  const localMatches = query.trim()
-    ? hospitals.filter(
+  const q = query.trim().toLowerCase();
+  const localMatches = q
+    ? (Array.isArray(hospitals) ? hospitals : []).filter(
         (h) =>
-          h.name.toLowerCase().includes(query.trim().toLowerCase()) ||
-          h.address.toLowerCase().includes(query.trim().toLowerCase())
+          (h.name || "").toLowerCase().includes(q) ||
+          (h.address || "").toLowerCase().includes(q)
       )
     : [];
 
@@ -28,7 +29,7 @@ export default function HospitalSearchBar({ hospitals, onSelectHospital, onSearc
         )}`
       );
       const data = await res.json();
-      if (!data.length) {
+      if (!Array.isArray(data) || !data.length) {
         setError("Nothing found for that search. Try a different name or place.");
         onSearchResults([]);
         return;

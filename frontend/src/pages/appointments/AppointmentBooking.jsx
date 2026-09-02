@@ -22,8 +22,8 @@ export default function AppointmentBooking() {
 
   useEffect(() => {
     listHospitals()
-      .then(setHospitals)
-      .catch(() => {});
+      .then((hs) => setHospitals(Array.isArray(hs) ? hs : []))
+      .catch(() => setHospitals([]));
   }, []);
 
   function handleSelectHospital(h) {
@@ -83,7 +83,7 @@ export default function AppointmentBooking() {
             {selectedHospital.name}
           </p>
           <p className="text-xs text-slate-400 mb-2">
-            {selectedHospital.address}
+            {selectedHospital.address || ""}
           </p>
           <DoctorList doctors={doctors} onBook={setBookingDoctor} />
         </div>

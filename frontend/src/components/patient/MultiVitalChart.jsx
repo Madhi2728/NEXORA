@@ -30,7 +30,7 @@ function buildData(vitals) {
       }),
     };
     if (v.type === "blood_pressure") {
-      const [systolic, diastolic] = v.value.split("/").map(Number);
+      const [systolic, diastolic] = String(v.value ?? "").split("/").map(Number);
       row.blood_pressure_systolic = systolic;
       row.blood_pressure_diastolic = diastolic;
     } else {
@@ -41,7 +41,8 @@ function buildData(vitals) {
 }
 
 export default function MultiVitalChart({ vitals }) {
-  if (!vitals.length) {
+  const rows = Array.isArray(vitals) ? vitals : [];
+  if (!rows.length) {
     return (
       <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
         No readings yet. Log one below to see the trend here.
@@ -49,10 +50,10 @@ export default function MultiVitalChart({ vitals }) {
     );
   }
 
-  const data = buildData(vitals);
+  const data = buildData(rows);
 
   const presentKeys = new Set();
-  vitals.forEach((v) => {
+  rows.forEach((v) => {
     if (v.type === "blood_pressure") {
       presentKeys.add("blood_pressure_systolic");
       presentKeys.add("blood_pressure_diastolic");

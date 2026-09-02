@@ -29,21 +29,36 @@ function RecenterMap({ center, zoom }) {
   return null;
 }
 
-export default function HospitalMap({ hospitals, searchResults = [], onSelect, center, zoom = 13 }) {
+const DEFAULT_CENTER = [11.341, 77.7172]; // Erode, Tamil Nadu
+
+const isCoord = (v) => Number.isFinite(Number(v));
+
+export default function HospitalMap({ hospitals, searchResults, onSelect, center, zoom = 13 }) {
+  // Leaflet throws on a Marker with null/NaN coordinates — hospitals seeded
+  // without lat/long would otherwise blank the whole page.
+  const bookable = (Array.isArray(hospitals) ? hospitals : []).filter(
+    (h) => isCoord(h?.latitude) && isCoord(h?.longitude)
+  );
+  const results = (Array.isArray(searchResults) ? searchResults : []).filter(
+    (r) => isCoord(r?.lat) && isCoord(r?.lon)
+  );
+  const safeCenter =
+    Array.isArray(center) && center.every(isCoord) ? center : DEFAULT_CENTER;
+
   return (
     <div className="h-64 rounded-xl overflow-hidden border border-slate-700">
-      <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
-        <RecenterMap center={center} zoom={zoom} />
+      <MapContainer center={safeCenter} zoom={zoom} style={{ height: "100%", width: "100%" }}>
+        <RecenterMap center={safeCenter} zoom={zoom} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
         {/* Our own bookable demo hospitals/clinics */}
-        {hospitals.map((h) => (
+        {bookable.map((h) => (
           <Marker
             key={h.id}
-            position={[h.latitude, h.longitude]}
+            position={[Number(h.latitude), Number(h.longitude)]}
             icon={bookableIcon}
             eventHandlers={{ click: () => onSelect(h) }}
           >
@@ -52,18 +67,18 @@ export default function HospitalMap({ hospitals, searchResults = [], onSelect, c
               <br />
               {h.type === "clinic" ? "Clinic" : "Hospital"} — bookable
               <br />
-              {h.address}
+              {h.address || ""}
             </Tooltip>
           </Marker>
         ))}
 
         {/* Real-world search results -- informational only, not bookable yet */}
-        {searchResults.map((r, i) => (
-          <Marker key={`search-${i}`} position={[r.lat, r.lon]} icon={infoIcon}>
+        {results.map((r, i) => (
+          <Marker key={`search-${i}`} position={[Number(r.lat), Number(r.lon)]} icon={infoIcon}>
             <Tooltip direction="top" offset={[0, -10]} opacity={1}>
-              <strong>{r.display_name.split(",")[0]}</strong>
+              <strong>{(r.display_name || "").split(",")[0]}</strong>
               <br />
-              <span style={{ color: "#64748b", fontSize: 12 }}>{r.display_name}</span>
+              <span style={{ color: "#64748b", fontSize: 12 }}>{r.display_name || ""}</span>
               <br />
               <em>Not yet connected with Nexora</em>
             </Tooltip>

@@ -28,7 +28,7 @@ export default function MedicineInfoLookup() {
     }
     const timer = setTimeout(() => {
       searchMedicines(query)
-        .then(setSuggestions)
+        .then((s) => setSuggestions(Array.isArray(s) ? s : []))
         .catch(() => setSuggestions([]));
     }, 250);
     return () => clearTimeout(timer);

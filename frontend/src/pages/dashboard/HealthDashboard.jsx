@@ -18,7 +18,7 @@ export default function HealthDashboard() {
     setError("");
     try {
       const data = await getMyVitals(); // no type filter -- fetch everything
-      setVitals(data);
+      setVitals(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Could not load your readings.");
     } finally {

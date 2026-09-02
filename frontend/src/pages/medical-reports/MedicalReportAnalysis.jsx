@@ -31,7 +31,9 @@ export default function MedicalReportAnalysis() {
   const load = useCallback(async () => {
     try {
       const data = await getMyReports();
-      setReports(data);
+      setReports(Array.isArray(data) ? data : []);
+    } catch {
+      setReports([]);
     } finally {
       setLoading(false);
     }
@@ -42,7 +44,9 @@ export default function MedicalReportAnalysis() {
   }, [load]);
 
   useEffect(() => {
-    const hasPending = reports.some((r) => r.status === "processing" || r.status === "pending");
+    const hasPending = (reports || []).some(
+      (r) => r.status === "processing" || r.status === "pending"
+    );
     if (hasPending) pollRef.current = setInterval(load, 3000);
     return () => clearInterval(pollRef.current);
   }, [reports, load]);
@@ -65,7 +69,7 @@ export default function MedicalReportAnalysis() {
             <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
               Loading...
             </div>
-          ) : !reports.length ? (
+          ) : !(reports || []).length ? (
             <div className="bg-slate-800 rounded-xl shadow-sm p-6 text-sm text-slate-400 text-center">
               No reports uploaded yet.
             </div>

@@ -15,7 +15,9 @@ export default function PrescriptionOCR() {
   const load = useCallback(async () => {
     try {
       const data = await getMyPrescriptions();
-      setPrescriptions(data);
+      setPrescriptions(Array.isArray(data) ? data : []);
+    } catch {
+      setPrescriptions([]);
     } finally {
       setLoading(false);
     }
@@ -28,7 +30,7 @@ export default function PrescriptionOCR() {
   // While anything is still processing, poll every 3s so the extracted
   // text appears automatically once OCR finishes in the background.
   useEffect(() => {
-    const hasPending = prescriptions.some(
+    const hasPending = (prescriptions || []).some(
       (p) => p.status === "processing" || p.status === "pending"
     );
     if (hasPending) {

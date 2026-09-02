@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
 import MouseGlowOverlay from "./components/common/MouseGlowOverlay";
 import AppGuideWidget from "./components/common/AppGuideWidget";
 import CursorGridOverlay from "./components/common/CursorGridOverlay";
@@ -42,7 +43,9 @@ export default function App() {
             path="/admin/*"
             element={
               <ProtectedRoute roles={["admin"]}>
-                <AdminDashboard />
+                <RouteErrorBoundary>
+                  <AdminDashboard />
+                </RouteErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -50,7 +53,9 @@ export default function App() {
             path="/doctor"
             element={
               <ProtectedRoute roles={["doctor"]}>
-                <DoctorDashboard />
+                <RouteErrorBoundary>
+                  <DoctorDashboard />
+                </RouteErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -58,7 +63,9 @@ export default function App() {
             path="/patient"
             element={
               <ProtectedRoute roles={["patient"]}>
-                <PatientDashboard />
+                <RouteErrorBoundary>
+                  <PatientDashboard />
+                </RouteErrorBoundary>
               </ProtectedRoute>
             }
           />

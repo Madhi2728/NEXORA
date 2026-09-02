@@ -41,8 +41,8 @@ export default function MedicalChatbot() {
   function loadHistory() {
     setHistoryLoading(true);
     getHistory()
-      .then(setHistory)
-      .catch(() => {})
+      .then((h) => setHistory(Array.isArray(h) ? h : []))
+      .catch(() => setHistory([]))
       .finally(() => setHistoryLoading(false));
   }
 
