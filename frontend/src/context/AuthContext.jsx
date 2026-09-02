@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { loginRequest, registerRequest, fetchCurrentUser } from "../services/authService";
+import {
+  loginRequest,
+  registerRequest,
+  verifyEmailRequest,
+  fetchCurrentUser,
+} from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -20,18 +25,26 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(email, password) {
-    const { token, user } = await loginRequest(email, password);
+  // Shared by the flows that end with a real session ({ token, user }).
+  function applySession({ token, user: nextUser }) {
     localStorage.setItem("token", token);
-    setUser(user);
-    return user;
+    setUser(nextUser);
+    return nextUser;
   }
 
+  async function login(email, password) {
+    return applySession(await loginRequest(email, password));
+  }
+
+  // Registration no longer starts a session — the user must verify their
+  // email first. Returns { requiresVerification, email }.
   async function register(name, email, password, role) {
-    const { token, user } = await registerRequest(name, email, password, role);
-    localStorage.setItem("token", token);
-    setUser(user);
-    return user;
+    return registerRequest(name, email, password, role);
+  }
+
+  // Completing email verification returns { token, user }, same as login.
+  async function verifyEmail(email, otp) {
+    return applySession(await verifyEmailRequest(email, otp));
   }
 
   function logout() {
@@ -40,7 +53,9 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, verifyEmail, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

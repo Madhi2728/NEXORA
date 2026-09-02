@@ -9,19 +9,26 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 
-const ROLE_HOME = { admin: "/admin", doctor: "/doctor", patient: "/patient" };
-
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "patient" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "patient",
+  });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const registerRoles = ALL_ROLES.map((r) =>
     r.value === "admin"
-      ? { ...r, disabled: true, disabledNote: "Created by an existing admin, not here" }
-      : r
+      ? {
+          ...r,
+          disabled: true,
+          disabledNote: "Created by an existing admin, not here",
+        }
+      : r,
   );
 
   async function handleSubmit(e) {
@@ -29,10 +36,20 @@ export default function Register() {
     setError("");
     setSubmitting(true);
     try {
-      const user = await register(form.name, form.email, form.password, form.role);
-      navigate(ROLE_HOME[user.role] || "/");
+      const { email } = await register(
+        form.name,
+        form.email,
+        form.password,
+        form.role,
+      );
+      // No session yet — the account exists but must verify its email first.
+      navigate(
+        `/verify-email?email=${encodeURIComponent(email || form.email)}`,
+      );
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      setError(
+        err.response?.data?.message || "Registration failed. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -40,7 +57,9 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <h3 className="text-2xl font-bold text-foreground">Create your account</h3>
+      <h3 className="text-2xl font-bold text-foreground">
+        Create your account
+      </h3>
       <p className="mt-2 text-sm text-muted-foreground">
         Admin accounts are created by an existing admin, not here.
       </p>
@@ -91,7 +110,11 @@ export default function Register() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+          {submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Mail className="h-4 w-4" />
+          )}
           Register & verify email
         </Button>
       </form>
