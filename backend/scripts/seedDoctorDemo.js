@@ -203,7 +203,14 @@ const PATIENTS = [
 async function findOrCreateUser(name, email, role) {
   const [user] = await User.findOrCreate({
     where: { email },
-    defaults: { name, password_hash: bcrypt.hashSync(PASSWORD, 10), role },
+    defaults: {
+      name,
+      password_hash: bcrypt.hashSync(PASSWORD, 10),
+      role,
+      // Demo accounts skip email verification.
+      is_email_verified: true,
+      email_verified_at: new Date(),
+    },
   });
   return user;
 }

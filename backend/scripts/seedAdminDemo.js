@@ -9,6 +9,8 @@ const bcrypt = require("bcryptjs");
 const { sequelize } = require("../src/config/db");
 const User = require("../src/models/User");
 const DoctorVerification = require("../src/models/DoctorVerification");
+const Hospital = require("../src/models/Hospital");
+const HospitalDoctor = require("../src/models/HospitalDoctor");
 
 const PASSWORD = "demo1234";
 
@@ -41,7 +43,14 @@ const PENDING_DOCTORS = [
 async function findOrCreateUser(name, email, role) {
   const [user] = await User.findOrCreate({
     where: { email },
-    defaults: { name, password_hash: bcrypt.hashSync(PASSWORD, 10), role },
+    defaults: {
+      name,
+      password_hash: bcrypt.hashSync(PASSWORD, 10),
+      role,
+      // Demo accounts skip email verification.
+      is_email_verified: true,
+      email_verified_at: new Date(),
+    },
   });
   return user;
 }
@@ -69,9 +78,64 @@ async function seed() {
     else if (verification.status === "pending") pendingCount += 1;
   }
 
+  // --- Hospitals & Departments demo ---
+  const HOSPITALS = [
+    {
+      name: "Nexora City Hospital",
+      type: "hospital",
+      address: "12 MG Road",
+      city: "Bengaluru",
+      state: "Karnataka",
+      pincode: "560001",
+      latitude: 12.9757,
+      longitude: 77.6011,
+      phone: "080-40001000",
+      departments: ["Cardiology", "Endocrinology", "General Medicine", "Orthopedics"],
+    },
+    {
+      name: "Harbour Clinic",
+      type: "clinic",
+      address: "5 Beach Road",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      pincode: "600001",
+      phone: "044-28008800",
+      departments: ["General Medicine", "Pediatrics"],
+    },
+  ];
+
+  let hospitalCount = 0;
+  let linkCount = 0;
+  const allDoctors = await User.findAll({ where: { role: "doctor" } });
+
+  for (const h of HOSPITALS) {
+    const [hospital, created] = await Hospital.findOrCreate({
+      where: { name: h.name },
+      defaults: { ...h, is_active: true },
+    });
+    if (created) hospitalCount += 1;
+
+    // Assign up to two doctors to the first hospital so booking has data.
+    if (hospital.name === "Nexora City Hospital") {
+      for (const [i, doc] of allDoctors.slice(0, 2).entries()) {
+        const [, made] = await HospitalDoctor.findOrCreate({
+          where: { hospital_id: hospital.id, user_id: doc.id },
+          defaults: {
+            hospital_id: hospital.id,
+            user_id: doc.id,
+            department: h.departments[i] || "General Medicine",
+            consultation_fee: 500 + i * 250,
+          },
+        });
+        if (made) linkCount += 1;
+      }
+    }
+  }
+
   console.log(
     `Seeded admin (${ADMIN.email}) + ${PENDING_DOCTORS.length} doctor accounts, ` +
-      `${pendingCount} verification(s) in the pending queue.`
+      `${pendingCount} verification(s) in the pending queue, ` +
+      `${hospitalCount} hospital(s), ${linkCount} hospital-doctor link(s).`
   );
   console.log(`All demo logins use password: ${PASSWORD}`);
   process.exit(0);

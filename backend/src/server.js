@@ -16,6 +16,10 @@ require("./models/Message");
 require("./models/DoctorVerification");
 require("./models/AuditLog");
 require("./models/ChatEvent");
+require("./models/HospitalDoctor");
+require("./models/RequestMetric");
+require("./models/ExportLog");
+require("./models/OtpToken");
 
 const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
@@ -31,11 +35,17 @@ const patientRoutes = require("./routes/patientRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const { warmCache } = require("./config/rxnormClient");
+const { requestMetrics } = require("./middleware/requestMetrics");
+const RequestMetric = require("./models/RequestMetric");
+const { purgeExpiredOtps } = require("./services/otpService");
 
 const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
+
+// Lightweight per-request telemetry for the admin System Health panel.
+app.use(requestMetrics);
 
 // Serve uploaded prescription images (dev only — swap for S3/Cloud Storage
 // signed URLs before going to production, since this exposes files by path).
@@ -67,7 +77,27 @@ async function start() {
   // that already exist from earlier runs, instead of only creating brand-new
   // tables. Fine for development; replace with real migrations for production.
   await sequelize.sync({ alter: true });
+
+  // sync({ alter: true }) is conservative about NOT NULL on FK-constrained
+  // columns and won't drop it from appointments.doctor_id — do it explicitly
+  // so Hospital-Directory bookings (which set doctor_user_id instead) can save.
+  // Idempotent: DROP NOT NULL on an already-nullable column is a no-op.
+  try {
+    await sequelize.query("ALTER TABLE appointments ALTER COLUMN doctor_id DROP NOT NULL");
+  } catch (err) {
+    console.warn("Could not relax appointments.doctor_id NOT NULL:", err.message);
+  }
+
   warmCache(); // fire-and-forget, doesn't block server startup
+
+  // Keep request_metrics bounded: prune on boot, then every 6 hours.
+  RequestMetric.prune();
+  setInterval(() => RequestMetric.prune(), 6 * 60 * 60 * 1000).unref();
+
+  // Drop long-expired OTP rows on boot, then every 6 hours.
+  purgeExpiredOtps();
+  setInterval(() => purgeExpiredOtps(), 6 * 60 * 60 * 1000).unref();
+
   app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
 }
 

@@ -1,59 +1,206 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const { sendOtpEmail } = require("../config/email");
+const OtpToken = require("../models/OtpToken");
+const {
+  generateAndSendOtp,
+  verifyOtp,
+  CooldownError,
+  RateLimitError,
+} = require("../services/otpService");
+const { MailDeliveryError } = require("../services/mailer");
+const { writeAudit } = require("../utils/adminAudit");
+
+const BCRYPT_ROUNDS = 10;
+const VALID_PURPOSES = ["signup_verification", "password_reset"];
 
 function signToken(user) {
-  return jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
-  );
+  return jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  });
 }
 
 function publicUser(user) {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-  };
+  return { id: user.id, name: user.name, email: user.email, role: user.role };
+}
+
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+// Turn an otpService.verifyOtp() failure into an HTTP response.
+function respondOtpFailure(res, result) {
+  if (result.reason === "too_many_attempts") {
+    return res.status(429).json({
+      message: "Too many incorrect attempts. Please request a new code.",
+    });
+  }
+  return res.status(400).json({
+    message: "That code is incorrect or has expired.",
+    ...(result.attemptsRemaining != null
+      ? { attemptsRemaining: result.attemptsRemaining }
+      : {}),
+  });
 }
 
 // POST /api/auth/register
 async function register(req, res) {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, password, role } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Name, email and password are required." });
     }
+    if (String(password).length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    }
 
-    // Only allow patient/doctor self-registration.
-    // Admin accounts should be created by an existing admin (see /api/auth/create-staff).
+    // Admins are provisioned via /api/auth/create-staff, not self-service.
     const allowedSelfRoles = ["patient", "doctor"];
     const finalRole = allowedSelfRoles.includes(role) ? role : "patient";
 
     const existing = await User.findOne({ where: { email } });
-    if (existing) {
+
+    if (existing && existing.is_email_verified) {
       return res.status(409).json({ message: "An account with this email already exists." });
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password_hash, role: finalRole });
+    let user = existing;
+    if (existing && !existing.is_email_verified) {
+      // Abandoned signup — keep the row, just re-send a verification code.
+      existing.name = name;
+      existing.password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      existing.role = finalRole;
+      await existing.save();
+    } else {
+      user = await User.create({
+        name,
+        email,
+        password_hash: await bcrypt.hash(password, BCRYPT_ROUNDS),
+        role: finalRole,
+        is_email_verified: false,
+      });
+    }
 
-    const token = signToken(user);
-    return res.status(201).json({ token, user: publicUser(user) });
+    try {
+      await generateAndSendOtp({ email, name, purpose: "signup_verification" });
+      await writeAudit(req, {
+        action: "auth.signup_otp_sent",
+        targetType: "user",
+        targetId: user.id,
+        metadata: { email, role: finalRole },
+      });
+    } catch (err) {
+      if (err instanceof CooldownError) {
+        // A code was already sent very recently — that's fine, tell the client.
+        return res.status(201).json({ requiresVerification: true, email });
+      }
+      if (err instanceof MailDeliveryError) {
+        console.error("register: could not send signup OTP:", err.message);
+        return res
+          .status(201)
+          .json({ requiresVerification: true, email, emailDelivery: "failed" });
+      }
+      throw err;
+    }
+
+    return res.status(201).json({ requiresVerification: true, email });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Registration failed." });
   }
 }
 
+// POST /api/auth/verify-email  body { email, otp }
+async function verifyEmail(req, res) {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const { otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and code are required." });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(400).json({ message: "That code is incorrect or has expired." });
+    }
+    if (user.is_email_verified) {
+      // Already verified — just log them in.
+      const token = signToken(user);
+      return res.json({ token, user: publicUser(user) });
+    }
+
+    const result = await verifyOtp({ email, otp, purpose: "signup_verification" });
+    if (!result.ok) return respondOtpFailure(res, result);
+
+    user.is_email_verified = true;
+    user.email_verified_at = new Date();
+    user.last_login_at = new Date();
+    await user.save();
+
+    await writeAudit(req, {
+      action: "auth.email_verified",
+      targetType: "user",
+      targetId: user.id,
+      metadata: { email },
+    });
+
+    const token = signToken(user);
+    return res.json({ token, user: publicUser(user) });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Could not verify email." });
+  }
+}
+
+// POST /api/auth/resend-otp  body { email, purpose }
+async function resendOtp(req, res) {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const purpose = req.body.purpose;
+    if (!email || !VALID_PURPOSES.includes(purpose)) {
+      return res.status(400).json({ message: "A valid email and purpose are required." });
+    }
+
+    const user = await User.findOne({ where: { email } });
+
+    // Don't leak which addresses exist / are already verified.
+    const skip =
+      !user ||
+      (purpose === "signup_verification" && user.is_email_verified);
+    if (skip) return res.json({ ok: true });
+
+    const { expiresAt } = await generateAndSendOtp({
+      email,
+      name: user.name,
+      purpose,
+    });
+    return res.json({ ok: true, expiresAt });
+  } catch (err) {
+    if (err instanceof CooldownError) {
+      return res.status(429).json({
+        message: err.message,
+        secondsRemaining: err.secondsRemaining,
+      });
+    }
+    if (err instanceof RateLimitError) {
+      return res.status(429).json({ message: err.message });
+    }
+    if (err instanceof MailDeliveryError) {
+      console.error("resendOtp: mail delivery failed:", err.message);
+      return res.status(502).json({ message: "Could not send the code. Please try again shortly." });
+    }
+    console.error(err);
+    return res.status(500).json({ message: "Could not send a new code." });
+  }
+}
+
 // POST /api/auth/login
 async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required." });
     }
@@ -66,6 +213,26 @@ async function login(req, res) {
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    if (!user.is_email_verified) {
+      // Password was right — nudge them through verification with a fresh code.
+      try {
+        await generateAndSendOtp({
+          email,
+          name: user.name,
+          purpose: "signup_verification",
+        });
+      } catch (err) {
+        if (
+          !(err instanceof CooldownError) &&
+          !(err instanceof RateLimitError) &&
+          !(err instanceof MailDeliveryError)
+        ) {
+          throw err;
+        }
+      }
+      return res.status(403).json({ code: "EMAIL_NOT_VERIFIED", email });
     }
 
     user.last_login_at = new Date();
@@ -91,10 +258,11 @@ async function getCurrentUser(req, res) {
   }
 }
 
-// POST /api/auth/create-staff  (admin only, protected by requireRole("admin") in routes)
+// POST /api/auth/create-staff  (admin only, gated by requireRole in routes)
 async function createStaff(req, res) {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, password, role } = req.body;
+    const email = normalizeEmail(req.body.email);
     const allowedRoles = ["admin", "doctor"];
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ message: "Role must be admin or doctor." });
@@ -105,8 +273,15 @@ async function createStaff(req, res) {
       return res.status(409).json({ message: "An account with this email already exists." });
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password_hash, role });
+    // Admin-vouched accounts are created already-verified.
+    const user = await User.create({
+      name,
+      email,
+      password_hash: await bcrypt.hash(password, BCRYPT_ROUNDS),
+      role,
+      is_email_verified: true,
+      email_verified_at: new Date(),
+    });
     return res.status(201).json({ user: publicUser(user) });
   } catch (err) {
     console.error(err);
@@ -114,30 +289,42 @@ async function createStaff(req, res) {
   }
 }
 
-// POST /api/auth/forgot-password
+// POST /api/auth/forgot-password  body { email }
 async function forgotPassword(req, res) {
+  const genericResponse = {
+    ok: true,
+    message: "If an account with that email exists, a reset code has been sent.",
+  };
   try {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body.email);
     if (!email) return res.status(400).json({ message: "Email is required." });
 
     const user = await User.findOne({ where: { email } });
+    if (!user) {
+      console.warn(`forgot-password: no account for ${email} (responding generically).`);
+      return res.json(genericResponse);
+    }
 
-    // Always return a generic success message, whether or not the email
-    // exists, so this endpoint can't be used to discover registered emails.
-    const genericResponse = {
-      message: "If an account with that email exists, a reset code has been sent.",
-    };
-
-    if (!user) return res.json(genericResponse);
-
-    const otp = String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    user.reset_otp = otp;
-    user.reset_otp_expires = expires;
-    await user.save();
-
-    await sendOtpEmail(user.email, otp);
+    try {
+      await generateAndSendOtp({ email, name: user.name, purpose: "password_reset" });
+      await writeAudit(req, {
+        action: "auth.password_reset_requested",
+        targetType: "user",
+        targetId: user.id,
+        metadata: { email },
+      });
+    } catch (err) {
+      // Never leak the failure reason — cooldown / rate-limit / delivery all
+      // collapse to the same generic response.
+      if (err instanceof MailDeliveryError) {
+        console.error("forgot-password: mail delivery failed:", err.message);
+      } else if (
+        !(err instanceof CooldownError) &&
+        !(err instanceof RateLimitError)
+      ) {
+        throw err;
+      }
+    }
 
     return res.json(genericResponse);
   } catch (err) {
@@ -146,32 +333,46 @@ async function forgotPassword(req, res) {
   }
 }
 
-// POST /api/auth/reset-password
+// POST /api/auth/reset-password  body { email, otp, newPassword }
 async function resetPassword(req, res) {
   try {
-    const { email, otp, newPassword } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) {
-      return res.status(400).json({ message: "Email, OTP, and new password are required." });
+      return res.status(400).json({ message: "Email, code, and new password are required." });
     }
-    if (newPassword.length < 6) {
+    if (String(newPassword).length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters." });
     }
 
+    const result = await verifyOtp({ email, otp, purpose: "password_reset" });
+    if (!result.ok) return respondOtpFailure(res, result);
+
     const user = await User.findOne({ where: { email } });
-    if (!user || !user.reset_otp || !user.reset_otp_expires) {
-      return res.status(400).json({ message: "Invalid or expired code." });
+    if (!user) {
+      return res.status(400).json({ message: "That code is incorrect or has expired." });
     }
 
-    if (user.reset_otp !== otp || new Date() > new Date(user.reset_otp_expires)) {
-      return res.status(400).json({ message: "Invalid or expired code." });
-    }
-
-    user.password_hash = await bcrypt.hash(newPassword, 10);
+    user.password_hash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    // Clear the legacy on-user reset fields too, if they were ever set.
     user.reset_otp = null;
     user.reset_otp_expires = null;
     await user.save();
 
-    return res.json({ message: "Password updated. You can now log in." });
+    // Any other outstanding codes for this address are now void.
+    await OtpToken.update(
+      { consumed_at: new Date() },
+      { where: { email, consumed_at: null } }
+    );
+
+    await writeAudit(req, {
+      action: "auth.password_reset_completed",
+      targetType: "user",
+      targetId: user.id,
+      metadata: { email },
+    });
+
+    return res.json({ ok: true, message: "Password updated. Please sign in." });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Could not reset password." });
@@ -180,6 +381,8 @@ async function resetPassword(req, res) {
 
 module.exports = {
   register,
+  verifyEmail,
+  resendOtp,
   login,
   getCurrentUser,
   createStaff,

@@ -17,15 +17,18 @@ const Appointment = sequelize.define(
       allowNull: false,
       references: { model: User, key: "id" },
     },
+    // Nullable: newer bookings come from the admin-managed Hospital Directory
+    // and attach a doctor USER (doctor_user_id) rather than a DoctorProfile.
+    // Legacy map bookings still set this.
     doctor_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: { model: DoctorProfile, key: "id" },
     },
     // The logged-in doctor User this appointment belongs to (nullable — the
-    // patient-facing booking flow books against the DoctorProfile directory,
-    // which isn't tied to real doctor logins. Set when a doctor's own queue
-    // is seeded / created).
+    // legacy patient-facing booking flow books against the DoctorProfile
+    // directory, which isn't tied to real doctor logins. Set when a doctor's
+    // own queue is seeded / created, or when booked via the Hospital Directory).
     doctor_user_id: {
       type: DataTypes.UUID,
       allowNull: true,

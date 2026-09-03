@@ -42,4 +42,12 @@ function warmCache() {
   ensureCache().catch(() => {});
 }
 
-module.exports = { searchNames, warmCache };
+// Snapshot for the admin System Health panel — no network call.
+function getCacheStats() {
+  return {
+    terms: cache.names.length,
+    fetchedAt: cache.fetchedAt ? new Date(cache.fetchedAt).toISOString() : null,
+  };
+}
+
+module.exports = { searchNames, warmCache, getCacheStats };

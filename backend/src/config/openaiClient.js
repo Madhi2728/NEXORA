@@ -20,6 +20,24 @@ function isConfigured() {
   return Boolean(API_KEY) || Boolean(GROQ_API_KEY);
 }
 
+// Last-known health of each provider, updated on every real call. The admin
+// System Health panel reads this instead of pinging the APIs on every load.
+const providerStatus = {
+  openai: { ok: null, at: null, error: null },
+  groq: { ok: null, at: null, error: null },
+};
+
+function recordProvider(name, ok, error) {
+  providerStatus[name] = { ok, at: new Date().toISOString(), error: error || null };
+}
+
+function getProviderStatus() {
+  return {
+    openai: { configured: Boolean(API_KEY), ...providerStatus.openai },
+    groq: { configured: Boolean(GROQ_API_KEY), ...providerStatus.groq },
+  };
+}
+
 const SYSTEM_PROMPT = `You are the health information assistant inside the Nexora Health app.
 
 Guidelines:
@@ -51,10 +69,12 @@ async function callOpenAI(history) {
 
   if (!response.ok) {
     const errText = await response.text();
+    recordProvider("openai", false, `HTTP ${response.status}`);
     throw new Error(`OpenAI request failed (${response.status}): ${errText}`);
   }
 
   const data = await response.json();
+  recordProvider("openai", true);
   return data.choices?.[0]?.message?.content?.trim() || "";
 }
 
@@ -79,10 +99,12 @@ async function callGroq(history) {
 
   if (!response.ok) {
     const errText = await response.text();
+    recordProvider("groq", false, `HTTP ${response.status}`);
     throw new Error(`Groq request failed (${response.status}): ${errText}`);
   }
 
   const data = await response.json();
+  recordProvider("groq", true);
   return data.choices?.[0]?.message?.content?.trim() || "";
 }
 
@@ -106,4 +128,4 @@ async function getChatReply(history) {
   }
 }
 
-module.exports = { getChatReply, isConfigured };
+module.exports = { getChatReply, isConfigured, getProviderStatus };

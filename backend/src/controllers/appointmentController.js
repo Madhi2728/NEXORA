@@ -20,17 +20,21 @@ function todayISO() {
 }
 
 // POST /api/appointments/book
+// Accepts either doctor_user_id (Hospital Directory booking against a real
+// doctor login) or doctor_id (legacy DoctorProfile map booking).
 async function bookAppointment(req, res) {
   try {
-    const { doctor_id, hospital_id, appointment_date, appointment_time, notes } = req.body;
+    const { doctor_id, doctor_user_id, hospital_id, appointment_date, appointment_time, notes } =
+      req.body;
 
-    if (!doctor_id || !hospital_id || !appointment_date || !appointment_time) {
+    if ((!doctor_id && !doctor_user_id) || !hospital_id || !appointment_date || !appointment_time) {
       return res.status(400).json({ message: "Doctor, hospital, date, and time are required." });
     }
 
-    const existing = await Appointment.findOne({
-      where: { doctor_id, appointment_date, appointment_time, status: "confirmed" },
-    });
+    const clash = doctor_user_id
+      ? { doctor_user_id, appointment_date, appointment_time, status: "confirmed" }
+      : { doctor_id, appointment_date, appointment_time, status: "confirmed" };
+    const existing = await Appointment.findOne({ where: clash });
     if (existing) {
       return res
         .status(409)
@@ -39,7 +43,8 @@ async function bookAppointment(req, res) {
 
     const appointment = await Appointment.create({
       patient_id: req.user.id,
-      doctor_id,
+      doctor_id: doctor_id || null,
+      doctor_user_id: doctor_user_id || null,
       hospital_id,
       appointment_date,
       appointment_time,
