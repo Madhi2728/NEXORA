@@ -64,6 +64,15 @@ if (activeProviderConfigured()) {
 }
 
 function logToConsole({ to, subject, text, html }) {
+  const body = (text || html || "").toString().trim();
+
+  // Pull the 6-digit code out and print it on its own clearly-tagged line so
+  // it's greppable and impossible to miss while developing without SMTP.
+  const codeMatch = body.match(/\b(\d{6})\b/);
+  if (codeMatch) {
+    console.log(`[DEV OTP] ${to} -> ${codeMatch[1]}  (${subject})`);
+  }
+
   console.log(
     [
       "",
@@ -72,7 +81,7 @@ function logToConsole({ to, subject, text, html }) {
       `From:    ${FROM}`,
       `Subject: ${subject}`,
       "",
-      (text || html || "").toString().trim(),
+      body,
       "──────────────────────────────────────────────────────────",
       "",
     ].join("\n")

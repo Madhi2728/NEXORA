@@ -28,6 +28,17 @@ function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
+// Password policy: >= 8 chars, at least one letter and one number.
+// Returns an error string, or null if the password is acceptable.
+function passwordPolicyError(password) {
+  const pw = String(password || "");
+  if (pw.length < 8) return "Password must be at least 8 characters.";
+  if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) {
+    return "Password must include at least one letter and one number.";
+  }
+  return null;
+}
+
 // Turn an otpService.verifyOtp() failure into an HTTP response.
 function respondOtpFailure(res, result) {
   if (result.reason === "too_many_attempts") {
@@ -52,11 +63,17 @@ async function register(req, res) {
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Name, email and password are required." });
     }
-    if (String(password).length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    const pwError = passwordPolicyError(password);
+    if (pwError) {
+      return res.status(400).json({ message: pwError });
     }
 
     // Admins are provisioned via /api/auth/create-staff, not self-service.
+    if (role === "admin") {
+      return res.status(403).json({
+        message: "Admin accounts are created by an existing admin, not through sign-up.",
+      });
+    }
     const allowedSelfRoles = ["patient", "doctor"];
     const finalRole = allowedSelfRoles.includes(role) ? role : "patient";
 
@@ -207,12 +224,12 @@ async function login(req, res) {
 
     const user = await User.findOne({ where: { email } });
     if (!user || !user.is_active) {
-      return res.status(401).json({ message: "Invalid credentials." });
+      return res.status(401).json({ message: "Invalid email or password." });
     }
 
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
-      return res.status(401).json({ message: "Invalid credentials." });
+      return res.status(401).json({ message: "Invalid email or password." });
     }
 
     if (!user.is_email_verified) {
@@ -341,8 +358,9 @@ async function resetPassword(req, res) {
     if (!email || !otp || !newPassword) {
       return res.status(400).json({ message: "Email, code, and new password are required." });
     }
-    if (String(newPassword).length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    const pwError = passwordPolicyError(newPassword);
+    if (pwError) {
+      return res.status(400).json({ message: pwError });
     }
 
     const result = await verifyOtp({ email, otp, purpose: "password_reset" });

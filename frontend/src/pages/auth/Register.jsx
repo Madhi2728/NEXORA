@@ -21,6 +21,15 @@ export default function Register() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Mirror the backend policy so users get feedback before the round-trip.
+  const passwordError =
+    form.password.length > 0 && form.password.length < 8
+      ? "Password must be at least 8 characters."
+      : form.password.length >= 8 &&
+          !(/[a-zA-Z]/.test(form.password) && /[0-9]/.test(form.password))
+        ? "Password must include at least one letter and one number."
+        : "";
+
   const registerRoles = ALL_ROLES.map((r) =>
     r.value === "admin"
       ? {
@@ -34,6 +43,10 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
     setSubmitting(true);
     try {
       const { email } = await register(
@@ -93,10 +106,16 @@ export default function Register() {
           <PasswordInput
             id="password"
             required
-            minLength={6}
+            minLength={8}
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
+          <p
+            className={`text-xs ${passwordError ? "text-destructive" : "text-muted-foreground"}`}
+          >
+            {passwordError ||
+              "At least 8 characters, with one letter and one number."}
+          </p>
         </div>
         <div className="space-y-2">
           <Label>I am a</Label>
@@ -109,7 +128,11 @@ export default function Register() {
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <Button type="submit" className="w-full" disabled={submitting}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={submitting || !!passwordError}
+        >
           {submitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (

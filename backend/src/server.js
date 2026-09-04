@@ -41,7 +41,35 @@ const { purgeExpiredOtps } = require("./services/otpService");
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
+// CORS: CLIENT_URL may be a single origin or a comma-separated allowlist
+// (e.g. "http://localhost:5173,https://app.nexora.health"). In development we
+// additionally accept any localhost / 127.0.0.1 origin on any port, so that a
+// Vite port drift (5173 -> 5174 when the port is already held) doesn't turn a
+// working setup into an opaque "Registration failed" caused by a blocked
+// preflight. Requests with no Origin (curl, server-to-server, health checks)
+// are always allowed.
+const ALLOWED_ORIGINS = (process.env.CLIENT_URL || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const DEV_LOCALHOST = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      if (process.env.NODE_ENV !== "production" && DEV_LOCALHOST.test(origin)) {
+        return callback(null, true);
+      }
+      // Don't throw (that would surface as a 500) — just withhold the CORS
+      // headers so the browser blocks it and the reason is obvious in devtools.
+      console.warn(`CORS: blocked origin ${origin} (not in CLIENT_URL allowlist)`);
+      return callback(null, false);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Lightweight per-request telemetry for the admin System Health panel.

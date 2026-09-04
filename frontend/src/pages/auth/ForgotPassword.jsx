@@ -91,8 +91,12 @@ export default function ForgotPassword() {
 
   async function setNewPassword(e) {
     e.preventDefault();
-    if (pw.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (pw.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) {
+      setError("Password must include at least one letter and one number.");
       return;
     }
     if (pw !== confirmPw) {
@@ -211,17 +215,20 @@ export default function ForgotPassword() {
             <PasswordInput
               id="fp-new"
               required
-              minLength={6}
+              minLength={8}
               value={pw}
               onChange={(e) => setPw(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              At least 8 characters, with one letter and one number.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="fp-confirm">Confirm new password</Label>
             <PasswordInput
               id="fp-confirm"
               required
-              minLength={6}
+              minLength={8}
               value={confirmPw}
               onChange={(e) => setConfirmPw(e.target.value)}
             />
