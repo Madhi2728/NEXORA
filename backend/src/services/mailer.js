@@ -1,17 +1,17 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-// Provider-agnostic transactional email. Callers use sendMail({ to, subject,
-// html, text }) and never need to know whether SMTP or Resend is behind it.
+// Transactional email via Resend (https://resend.com). Callers use
+// sendMail({ to, subject, html, text }) — `to` must always be the
+// recipient's OWN registered email address (the caller decides that, this
+// module just delivers to whatever address it's given); it is never MAIL_FROM
+// or any other address of this module's own choosing.
 //
-// If the active provider isn't configured we log ONE warning and fall back to
-// printing the email (OTP included) to the console so local dev keeps working
-// — except under NODE_ENV=production, where a misconfigured mailer must fail
-// loudly instead of silently dropping verification codes.
+// If RESEND_API_KEY isn't set we log ONE warning and fall back to printing
+// the email (OTP included, tagged [DEV OTP]) to the console so local dev
+// keeps working — except under NODE_ENV=production, where a misconfigured
+// mailer must fail loudly instead of silently dropping verification codes.
 
-const PROVIDER = (process.env.MAIL_PROVIDER || "smtp").toLowerCase();
-const FROM_NAME = process.env.MAIL_FROM_NAME || "Nexora Health";
-const FROM_EMAIL = process.env.MAIL_FROM_EMAIL || "no-reply@nexora.health";
-const FROM = `${FROM_NAME} <${FROM_EMAIL}>`;
+const FROM = process.env.MAIL_FROM || "Nexora Health <no-reply@nexora.health>";
 
 // Thrown for any delivery-layer failure so auth handlers can tell a bad
 // address / provider outage apart from a validation error.
@@ -23,52 +23,39 @@ class MailDeliveryError extends Error {
   }
 }
 
-let _transporter = null;
-let _warnedMissingCreds = false;
-
-function smtpConfigured() {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
-}
+let _resend = null;
+let _warnedMissingKey = false;
 
 function resendConfigured() {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
-function activeProviderConfigured() {
-  return PROVIDER === "resend" ? resendConfigured() : smtpConfigured();
-}
-
-function getTransporter() {
-  if (_transporter) return _transporter;
-  _transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
-  return _transporter;
+function getClient() {
+  if (_resend) return _resend;
+  _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
 }
 
 // Announce the active provider once at module load.
-if (activeProviderConfigured()) {
-  console.log(`Mailer: provider "${PROVIDER}" active (from ${FROM}).`);
+if (resendConfigured()) {
+  console.log(`Mailer: Resend active (from ${FROM}).`);
 } else if (process.env.NODE_ENV === "production") {
   console.error(
-    `Mailer: provider "${PROVIDER}" is NOT configured and NODE_ENV=production — email sends will fail.`
+    "Mailer: RESEND_API_KEY is NOT set and NODE_ENV=production — email sends will fail."
   );
 } else {
   console.warn(
-    `Mailer: provider "${PROVIDER}" is not configured. Emails (including OTP codes) will be printed to the console for local dev.`
+    "Mailer: RESEND_API_KEY is not set. Emails (including OTP codes) will be printed to the console for local dev."
   );
-  _warnedMissingCreds = true;
+  _warnedMissingKey = true;
 }
 
 function logToConsole({ to, subject, text, html }) {
   const body = (text || html || "").toString().trim();
 
-  // Pull the 6-digit code out and print it on its own clearly-tagged line so
-  // it's greppable and impossible to miss while developing without SMTP.
-  const codeMatch = body.match(/\b(\d{6})\b/);
+  // Pull the 4-digit code out and print it on its own clearly-tagged line so
+  // it's greppable and impossible to miss while developing without Resend.
+  const codeMatch = body.match(/\b(\d{4})\b/);
   if (codeMatch) {
     console.log(`[DEV OTP] ${to} -> ${codeMatch[1]}  (${subject})`);
   }
@@ -76,39 +63,22 @@ function logToConsole({ to, subject, text, html }) {
   console.log(
     [
       "",
-      "──────────── DEV EMAIL (mailer not configured) ────────────",
+      "──────────── DEV EMAIL (RESEND_API_KEY not configured) ────────────",
       `To:      ${to}`,
       `From:    ${FROM}`,
       `Subject: ${subject}`,
       "",
       body,
-      "──────────────────────────────────────────────────────────",
+      "─────────────────────────────────────────────────────────────────",
       "",
     ].join("\n")
   );
 }
 
-async function sendViaResend({ to, subject, html, text }) {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from: FROM, to: [to], subject, html, text }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Resend responded ${res.status}: ${body}`);
-  }
-}
-
-async function sendViaSmtp({ to, subject, html, text }) {
-  await getTransporter().sendMail({ from: FROM, to, subject, html, text });
-}
-
 /**
  * Send one transactional email.
+ * @param {{ to: string, subject: string, html: string, text: string }} args
+ *   `to` must be the end user's own registered email address.
  * @returns {Promise<{ delivered: boolean, provider: string }>}
  * @throws {MailDeliveryError} on any delivery failure
  */
@@ -117,29 +87,36 @@ async function sendMail({ to, subject, html, text }) {
     throw new MailDeliveryError("sendMail requires 'to' and 'subject'.");
   }
 
-  if (!activeProviderConfigured()) {
+  if (!resendConfigured()) {
     if (process.env.NODE_ENV === "production") {
       throw new MailDeliveryError(
-        `Mail provider "${PROVIDER}" is not configured; refusing to drop email in production.`
+        "RESEND_API_KEY is not configured; refusing to drop email in production."
       );
     }
-    if (!_warnedMissingCreds) {
-      console.warn(`Mailer: "${PROVIDER}" not configured — printing emails to console.`);
-      _warnedMissingCreds = true;
+    if (!_warnedMissingKey) {
+      console.warn("Mailer: RESEND_API_KEY not configured — printing emails to console.");
+      _warnedMissingKey = true;
     }
     logToConsole({ to, subject, text, html });
     return { delivered: false, provider: "console" };
   }
 
   try {
-    if (PROVIDER === "resend") {
-      await sendViaResend({ to, subject, html, text });
-    } else {
-      await sendViaSmtp({ to, subject, html, text });
+    // Never fall back to FROM as a recipient — `to` is always the caller-
+    // supplied address (the user's own registered email).
+    const { error } = await getClient().emails.send({
+      from: FROM,
+      to: [to],
+      subject,
+      html,
+      text,
+    });
+    if (error) {
+      throw new Error(typeof error === "string" ? error : error.message || JSON.stringify(error));
     }
-    return { delivered: true, provider: PROVIDER };
+    return { delivered: true, provider: "resend" };
   } catch (err) {
-    throw new MailDeliveryError(`Failed to send email via ${PROVIDER}: ${err.message}`, {
+    throw new MailDeliveryError(`Failed to send email via Resend: ${err.message}`, {
       cause: err,
     });
   }

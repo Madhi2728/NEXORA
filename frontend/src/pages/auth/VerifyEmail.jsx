@@ -42,8 +42,8 @@ export default function VerifyEmail() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (otp.length !== 6) {
-      setError("Enter the full 6-digit code.");
+    if (otp.length !== 4) {
+      setError("Enter the full 4-digit code.");
       return;
     }
     setError("");
@@ -94,7 +94,7 @@ export default function VerifyEmail() {
     <AuthLayout>
       <h3 className="text-2xl font-bold text-foreground">Verify your email</h3>
       <p className="mt-2 text-sm text-muted-foreground">
-        We sent a 6-digit code to{" "}
+        We sent a 4-digit code to{" "}
         <span className="font-medium text-foreground">{maskEmail(email)}</span>.
         Enter it below to finish setting up your account.
       </p>

@@ -59,8 +59,8 @@ export default function ForgotPassword() {
 
   function submitOtp(e) {
     e.preventDefault();
-    if (otp.length !== 6) {
-      setError("Enter the full 6-digit code.");
+    if (otp.length !== 4) {
+      setError("Enter the full 4-digit code.");
       return;
     }
     setError("");
@@ -135,8 +135,8 @@ export default function ForgotPassword() {
       </h3>
       <p className="mt-2 text-sm text-muted-foreground">
         {step === "email" &&
-          "Enter your email and we'll send you a 6-digit code."}
-        {step === "otp" && "Enter the 6-digit code we emailed you."}
+          "Enter your email and we'll send you a 4-digit code."}
+        {step === "otp" && "Enter the 4-digit code we emailed you."}
         {step === "password" && "Choose a new password for your account."}
       </p>
 

@@ -1,12 +1,13 @@
 import { useEffect, useId, useRef } from "react";
 
-// Six individual digit boxes: type to auto-advance, backspace to go back,
-// paste a full code to fill them all. numeric + one-time-code so mobile OS
-// autofill (which drops the whole code into the first box) still works.
+// `length` individual digit boxes (4 by default): type to auto-advance,
+// backspace to go back, paste a full code to fill them all. numeric +
+// one-time-code so mobile OS autofill (which drops the whole code into the
+// first box) still works.
 export default function OtpInput({
   value = "",
   onChange,
-  length = 6,
+  length = 4,
   disabled = false,
   autoFocus = false,
 }) {

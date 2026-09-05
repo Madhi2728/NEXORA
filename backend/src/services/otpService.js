@@ -6,7 +6,7 @@ const { sendMail } = require("./mailer");
 const { signupOtpEmail, passwordResetOtpEmail } = require("./emailTemplates");
 
 // --- tuning (env with sane defaults) ---------------------------------------
-const OTP_LENGTH = Number(process.env.OTP_LENGTH || 6);
+const OTP_LENGTH = Number(process.env.OTP_LENGTH || 4);
 const SIGNUP_TTL_MIN = Number(process.env.OTP_SIGNUP_TTL_MINUTES || 10);
 const RESET_TTL_MIN = Number(process.env.OTP_RESET_TTL_MINUTES || 15);
 const MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
@@ -40,9 +40,12 @@ function normalizeEmail(email) {
 }
 
 function generateCode(length) {
-  // crypto.randomInt is uniform and unpredictable — never Math.random for this.
+  // crypto.randomInt is uniform and unpredictable — never Math.random for
+  // this. Lower bound excludes leading zeros so the code is always exactly
+  // `length` digits (e.g. length 4 -> crypto.randomInt(1000, 10000)).
+  const min = 10 ** (length - 1);
   const max = 10 ** length;
-  return String(crypto.randomInt(0, max)).padStart(length, "0");
+  return String(crypto.randomInt(min, max));
 }
 
 /**
